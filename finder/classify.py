@@ -32,6 +32,7 @@ NON_FINANCE_STRONG = re.compile(
     r"multimedia|graphic|human resources|marketing|communications|ux|nurs\w*|pharmac\w*)\b", re.I)
 NON_FINANCE_WEAK = re.compile(
     r"\b(technology|tech|data|legal|design|facilities|operations|it|ai|sales|product)\b", re.I)
+BANKING_WORDS = re.compile(r"investment banking|\bm&a\b|mergers|advisory|coverage|\bib\b", re.I)
 
 TRACKS = [
     ("Ratings", r"\bratings?\b|rating agency|credit ratings"),
@@ -77,6 +78,9 @@ def is_internship_title(title: str) -> bool:
 def track_of(title: str, text: str) -> str:
     t = (title or "").lower()
     if NON_FINANCE_STRONG.search(t):
+        return "Non-finance"
+    # "Equities Trading Technology" is a tech seat; "Technology Investment Banking" is not.
+    if re.search(r"\btechnology\b", t) and not BANKING_WORDS.search(t):
         return "Non-finance"
     for name, pat in TRACKS:          # title first: it is the strongest signal
         if re.search(pat, t, re.I):
@@ -133,14 +137,17 @@ def _mn(year: int, month: int, end: bool = False) -> int:
     return year * 12 + month
 
 
-def window_verdict(dates: list[tuple[int, int]]) -> tuple[str, str] | None:
+def window_verdict(dates: list[tuple[int, int]], body: str = "") -> tuple[str, str] | None:
     """Compare a graduation window (or single date) with May 2028."""
     if not dates:
         return None
     shown = ", ".join(f"{m:02d}/{y}" if m else str(y) for y, m in dates[:4])
     if len(dates) == 1:
         y, m = dates[0]
-        if (y == GRAD_YEAR and m in (0, 4, 5, 6)) or abs(_mn(y, m) - TARGET) <= 1:
+        by_phrase = re.search(rf"(by|before|no later than)\s+(\w+\s+)?{y}", body or "")
+        if by_phrase and _mn(y, m, end=True) >= TARGET:
+            return "Eligible", f"Graduating by {shown}, which includes May {GRAD_YEAR}"
+        if (y == GRAD_YEAR and m in (0, 4, 5, 6)) or abs(_mn(y, m) - TARGET) <= 2:
             return "Eligible", f"Graduation date fits May {GRAD_YEAR} ({shown})"
         if (y, m) == (GRAD_YEAR - 1, 12):
             return "Unclear", f"Mentions December {GRAD_YEAR - 1} graduation; check if May {GRAD_YEAR} is included"
@@ -174,7 +181,9 @@ def eligibility(title: str, text: str) -> tuple[str, str]:
     if re.search(rf"class of {GRAD_YEAR}\b", both):
         return "Eligible", f"Says class of {GRAD_YEAR}"
 
-    verdict = window_verdict(grad_dates(text or ""))
+    if re.search(r"penultimate|junior year|rising senior|third[- ]year|entering (your|their) (final|senior) year", body):
+        return "Eligible", "Asks for penultimate-year / junior students"
+    verdict = window_verdict(grad_dates(text or ""), body)
     if verdict:
         return verdict
 

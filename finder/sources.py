@@ -13,7 +13,8 @@ from typing import Iterable
 
 import requests
 
-UA = "Mozilla/5.0 (compatible; internship-finder/1.0; personal job search)"
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
 TIMEOUT = 25
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": UA, "Accept": "application/json",
@@ -21,7 +22,7 @@ SESSION.headers.update({"User-Agent": UA, "Accept": "application/json",
 
 # Words used to search large Workday boards. Each term is searched separately
 # and results are merged, so a posting only needs to match one of them.
-WORKDAY_SEARCH_TERMS = ["summer", "intern", "2027"]
+WORKDAY_SEARCH_TERMS = ["summer", "intern"]
 WORKDAY_PAGE = 20          # Workday's maximum page size
 WORKDAY_MAX_PER_TERM = 200 # safety cap per search term
 
@@ -40,17 +41,42 @@ def html_to_text(raw: str | None) -> str:
     return re.sub(r"\n\s*\n+", "\n", text).strip()
 
 
+_last_call = {"t": 0.0}
+MIN_GAP = 1.2          # seconds between requests (Workday rate-limits fast callers)
+
+
+def _throttle():
+    wait = MIN_GAP - (time.time() - _last_call["t"])
+    if wait > 0:
+        time.sleep(wait)
+    _last_call["t"] = time.time()
+
+
+def _request(method: str, url: str, headers=None, **kw):
+    delays = [20, 60, 120]
+    for attempt in range(len(delays) + 1):
+        _throttle()
+        r = SESSION.request(method, url, timeout=TIMEOUT, headers=headers, **kw)
+        if r.status_code not in (429, 503) or attempt == len(delays):
+            r.raise_for_status()
+            return r.json()
+        retry = r.headers.get("Retry-After", "")
+        time.sleep(int(retry) if retry.isdigit() else delays[attempt])
+    raise RuntimeError("unreachable")
+
+
+def _wd_headers(url: str) -> dict:
+    host = url.split("/wday/")[0]
+    return {"Content-Type": "application/json", "Origin": host, "Referer": host + "/"}
+
+
 def _get(url: str, **kw):
-    r = SESSION.get(url, timeout=TIMEOUT, **kw)
-    r.raise_for_status()
-    return r.json()
+    headers = _wd_headers(url) if "myworkdayjobs.com" in url else None
+    return _request("GET", url, headers=headers, **kw)
 
 
 def _post(url: str, payload: dict):
-    r = SESSION.post(url, json=payload, timeout=TIMEOUT,
-                     headers={"Content-Type": "application/json"})
-    r.raise_for_status()
-    return r.json()
+    return _request("POST", url, headers=_wd_headers(url), json=payload)
 
 
 # ----------------------------------------------------------------- Workday
@@ -66,7 +92,10 @@ def parse_workday_detail(data: dict) -> dict:
     return data.get("jobPostingInfo") or {}
 
 
-def fetch_workday(c: dict, title_prefilter=None, delay: float = 0.3) -> list[dict]:
+def fetch_workday(c: dict, title_prefilter=None, cache=None, **_) -> list[dict]:
+    """cache: {job_id: previous job dict}. Known postings reuse their stored
+    description instead of downloading it again (saves most requests)."""
+    cache = cache or {}
     base = workday_base(c["tenant"], c["wd"], c["site"])
     seen_paths: dict[str, dict] = {}
     for term in WORKDAY_SEARCH_TERMS:
@@ -83,30 +112,35 @@ def fetch_workday(c: dict, title_prefilter=None, delay: float = 0.3) -> list[dic
             offset += WORKDAY_PAGE
             if not posts or offset >= total:
                 break
-            time.sleep(delay)
 
     out = []
     for path, p in seen_paths.items():
         title = p.get("title", "")
-        # Skip detail calls for titles that clearly aren't internships.
         if title_prefilter and not title_prefilter(title):
             continue
-        try:
-            info = parse_workday_detail(_get(f"{base}{path}"))
-        except requests.RequestException:
-            info = {}
-        time.sleep(delay)
+        jid = f"workday:{c['tenant']}:{path}"
+        old = cache.get(jid)
+        if old and old.get("description"):
+            info = {"title": old.get("title"), "location": old.get("location"),
+                    "externalUrl": old.get("url"), "postedOn": old.get("posted")}
+            desc = old["description"]
+        else:
+            try:
+                info = parse_workday_detail(_get(f"{base}{path}"))
+            except requests.RequestException:
+                info = {}
+            desc = html_to_text(info.get("jobDescription"))
         public = info.get("externalUrl") or (
             f"https://{c['tenant']}.{c['wd']}.myworkdayjobs.com/en-US/{c['site']}{path}")
         out.append({
-            "id": f"workday:{c['tenant']}:{info.get('jobReqId') or path}",
+            "id": jid,
             "company": c["name"],
             "category": c.get("category", ""),
             "title": info.get("title") or title,
             "location": info.get("location") or p.get("locationsText", ""),
             "url": public,
-            "posted": info.get("postedOn") or p.get("postedOn", ""),
-            "description": html_to_text(info.get("jobDescription")),
+            "posted": p.get("postedOn") or info.get("postedOn", ""),
+            "description": desc,
             "source": "Workday",
         })
     return out
@@ -196,17 +230,17 @@ FETCHERS = {
 }
 
 
-def fetch_company(c: dict, title_prefilter=None) -> list[dict]:
+def fetch_company(c: dict, title_prefilter=None, cache=None) -> list[dict]:
     fn = FETCHERS.get(c.get("ats", ""))
     if not fn:
         raise ValueError(f"unknown ats '{c.get('ats')}'")
-    return fn(c, title_prefilter=title_prefilter)
+    return fn(c, title_prefilter=title_prefilter, cache=cache)
 
 
-def iter_safe(companies: Iterable[dict], title_prefilter=None):
+def iter_safe(companies: Iterable[dict], title_prefilter=None, cache=None):
     """Yield (company, jobs, error) so one broken board never stops the run."""
     for c in companies:
         try:
-            yield c, fetch_company(c, title_prefilter=title_prefilter), None
+            yield c, fetch_company(c, title_prefilter=title_prefilter, cache=cache), None
         except Exception as e:  # noqa: BLE001 - report and keep going
             yield c, [], f"{type(e).__name__}: {e}"[:300]

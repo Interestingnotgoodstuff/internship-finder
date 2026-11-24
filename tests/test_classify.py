@@ -60,3 +60,16 @@ def test_classify_adds_fields():
     j = classify({"title": "Credit Analyst Internship (Summer 2027)", "location": "Chicago, IL",
                   "description": "Graduating May 2028."})
     assert j["eligibility"] == "Eligible" and j["city"] == "Chicago" and j["track"]
+
+
+def test_graduation_by_summer_2028_is_eligible():
+    s, _ = eligibility("IB Summer Analyst - Summer 2027",
+                       "Entering your penultimate year of study (i.e. graduation by summer 2028)")
+    assert s == "Eligible"
+    s, _ = eligibility("Summer Analyst", "Must be graduating no later than June 2028.")
+    assert s == "Eligible"
+
+
+def test_trading_technology_is_not_finance_seat():
+    assert track_of("2027 Summer Internship Program – Equities Trading Technology", "") == "Non-finance"
+    assert track_of("2027 Summer Analyst - Technology Investment Banking", "") == "Investment Banking"

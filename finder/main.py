@@ -29,7 +29,7 @@ NON_US = re.compile(
     r"london|toronto|montreal|calgary|vancouver|hong kong|singapore|tokyo|sydney|melbourne|"
     r"paris|frankfurt|zurich|geneva|dublin|luxembourg|madrid|milan|amsterdam|mumbai|"
     r"bangalore|bengaluru|dubai|sao paulo|mexico city|canada|united kingdom|\buk\b|india|"
-    r"germany|france|spain|switzerland|japan|australia|ireland|brazil", re.I)
+    r"germany|france|spain|switzerland|japan|australia|ireland|brazil|mexico|monterrey|guadalajara", re.I)
 
 
 def is_us(location: str) -> bool:
@@ -39,6 +39,8 @@ def is_us(location: str) -> bool:
 def wants_title(title: str) -> bool:
     """Cheap first pass before downloading a full description."""
     t = title or ""
+    if re.search(r"employee access|internal only", t, re.I):
+        return False
     return C.is_internship_title(t) or bool(re.search(r"class of 2028|2028 analyst", t, re.I))
 
 
@@ -64,7 +66,16 @@ def run(demo: bool = False) -> dict:
         from .demo import demo_results
         results = demo_results(companies)
     else:
-        results = S.iter_safe(companies, title_prefilter=wants_title)
+        # Spread Workday boards out between the others to avoid rate limits.
+        wd = [c for c in companies if c.get("ats") == "workday"]
+        other = [c for c in companies if c.get("ats") != "workday"]
+        ordered = []
+        while wd or other:
+            if wd:
+                ordered.append(wd.pop(0))
+            if other:
+                ordered.append(other.pop(0))
+        results = S.iter_safe(ordered, title_prefilter=wants_title, cache=state.get("jobs", {}))
 
     for c, jobs, err in results:
         kept = 0

@@ -55,7 +55,7 @@ companies:
 
   # ---------- Private credit / investing ----------
   - {name: "PGIM", category: "Private Credit / Investing", ats: workday, tenant: pru, wd: wd5, site: Careers}
-  - {name: "Apollo", category: "Private Credit / Investing", ats: workday, tenant: athene, wd: wd5, site: apollononpubliccareersite}
+  - {name: "Apollo", category: "Private Credit / Investing", ats: workday, tenant: athene, wd: wd5, site: nonpubapollocareersite}
   - {name: "Blackstone", category: "Private Credit / Investing", ats: workday, tenant: blackstone, wd: wd1, site: Blackstone_Campus_Careers}
   - {name: "General Atlantic", category: "Private Credit / Investing", ats: greenhouse, token: gacampus}
   - {name: "Harrison Street", category: "Private Credit / Investing", ats: lever, slug: harrisonst}
