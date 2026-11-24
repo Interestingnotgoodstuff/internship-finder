@@ -1,0 +1,111 @@
+# Companies the finder checks every day.
+#
+# How to add a firm:
+#   1. Open any job posting on the firm's careers site and look at the URL.
+#   2. Match it to one of the patterns below and add an entry.
+#
+#   Workday:    https://<tenant>.<wd>.myworkdayjobs.com/<site>/job/...
+#               -> {name, ats: workday, tenant, wd, site}
+#   Greenhouse: https://job-boards.greenhouse.io/<token>/jobs/...
+#               -> {name, ats: greenhouse, token}
+#   Lever:      https://jobs.lever.co/<slug>/...
+#               -> {name, ats: lever, slug}
+#   Ashby:      https://jobs.ashbyhq.com/<org>/...
+#               -> {name, ats: ashby, org}
+#
+# "category" is only a label used for grouping on the dashboard.
+# Not sure of the details? Put the firm under "candidates" at the bottom
+# and run the "Discover job boards" workflow; it will test guesses for you.
+
+companies:
+  # ---------- Ratings agencies ----------
+  - {name: "S&P Global", category: Ratings, ats: workday, tenant: spgi, wd: wd5, site: SPGI_Careers}
+
+  # ---------- Investment banks / advisory ----------
+  - {name: "Piper Sandler", category: Banking, ats: workday, tenant: pipersandler, wd: wd501, site: Piper_Sandler_Careers}
+  - {name: "PJT Partners", category: Banking, ats: workday, tenant: pjtpartners, wd: wd1, site: Students}
+  - {name: "Raymond James", category: Banking, ats: workday, tenant: raymondjames, wd: wd1, site: RaymondJamesEarlyCareers}
+  - {name: "Houlihan Lokey", category: Banking, ats: workday, tenant: hl, wd: wd1, site: Campus}
+  - {name: "Guggenheim", category: Banking, ats: workday, tenant: guggenheim, wd: wd1, site: Guggenheim_Careers_Campus}
+  - {name: "Harris Williams (PNC)", category: Banking, ats: workday, tenant: pnc, wd: wd5, site: HarrisWilliams}
+  - {name: "Stout", category: Banking, ats: workday, tenant: stout, wd: wd5, site: Stout-Student-Careers}
+  - {name: "Financial Technology Partners", category: Banking, ats: greenhouse, token: financialtechnologypartners}
+  - {name: "Ducera Partners", category: Banking, ats: greenhouse, token: ducerapartnerscampus}
+  - {name: "LionTree", category: Banking, ats: greenhouse, token: liontree}
+  - {name: "AQ Technology Partners", category: Banking, ats: greenhouse, token: aqtechnologypartners}
+  - {name: "D.A. Davidson", category: Banking, ats: lever, slug: dadavidson}
+  - {name: "Aeris Partners", category: Banking, ats: lever, slug: aerispartners.com}
+  - {name: "Agentis Capital Advisors", category: Banking, ats: ashby, org: agentis-capital-advisors}
+  - {name: "MACA", category: Banking, ats: ashby, org: maca}
+
+  # ---------- Commercial / corporate banks ----------
+  - {name: "Wells Fargo", category: "Commercial / Corporate Banking", ats: workday, tenant: wf, wd: wd1, site: wellsfargojobs}
+  - {name: "BMO", category: "Commercial / Corporate Banking", ats: workday, tenant: bmo, wd: wd3, site: Campus}
+  - {name: "CIBC", category: "Commercial / Corporate Banking", ats: workday, tenant: cibc, wd: wd3, site: campus}
+  - {name: "TD Securities", category: "Commercial / Corporate Banking", ats: workday, tenant: td, wd: wd3, site: TD_Bank_Careers}
+  - {name: "Barclays", category: "Commercial / Corporate Banking", ats: workday, tenant: barclays, wd: wd3, site: External_Career_Site_Barclays}
+  - {name: "KeyBank / KBCM", category: "Commercial / Corporate Banking", ats: workday, tenant: keybank, wd: wd5, site: External_Career_Site}
+  - {name: "Capital One", category: "Commercial / Corporate Banking", ats: workday, tenant: capitalone, wd: wd12, site: Capital_One}
+  - {name: "Texas Capital", category: "Commercial / Corporate Banking", ats: workday, tenant: texascapitalbank, wd: wd12, site: Careers}
+  - {name: "Santander", category: "Commercial / Corporate Banking", ats: workday, tenant: santander, wd: wd3, site: SantanderCareers}
+  - {name: "MUFG", category: "Commercial / Corporate Banking", ats: workday, tenant: mufgub, wd: wd3, site: MUFG-Careers}
+  - {name: "Wintrust", category: "Commercial / Corporate Banking", ats: workday, tenant: wintrust, wd: wd1, site: Search}
+  - {name: "FNB Corp", category: "Commercial / Corporate Banking", ats: workday, tenant: fnbcorp, wd: wd501, site: FNBCORP}
+  - {name: "Western Alliance", category: "Commercial / Corporate Banking", ats: workday, tenant: westernalliancebank, wd: wd5, site: WAB}
+
+  # ---------- Private credit / investing ----------
+  - {name: "PGIM", category: "Private Credit / Investing", ats: workday, tenant: pru, wd: wd5, site: Careers}
+  - {name: "Apollo", category: "Private Credit / Investing", ats: workday, tenant: athene, wd: wd5, site: apollononpubliccareersite}
+  - {name: "Blackstone", category: "Private Credit / Investing", ats: workday, tenant: blackstone, wd: wd1, site: Blackstone_Campus_Careers}
+  - {name: "General Atlantic", category: "Private Credit / Investing", ats: greenhouse, token: gacampus}
+  - {name: "Harrison Street", category: "Private Credit / Investing", ats: lever, slug: harrisonst}
+  - {name: "Cambridge Associates", category: "Private Credit / Investing", ats: workday, tenant: cambridgeassociates, wd: wd5, site: Handshake}
+
+  # ---------- Ratings / data (Greenhouse) ----------
+  - {name: "KBRA", category: Ratings, ats: greenhouse, token: krollbondratingagency}
+
+  # ---------- Energy / commodities ----------
+  - {name: "Castleton Commodities", category: "Energy / Commodities", ats: workday, tenant: osv-cci, wd: wd1, site: CCICareers}
+
+# Firms we haven't pinned down yet. The "Discover job boards" workflow tries
+# common guesses for each one and reports which work. Copy any hit into the
+# list above.
+candidates:
+  - {name: "Moody's", guesses: {workday: [[moodys, wd5], [moodys, wd1]], greenhouse: [moodys], lever: [moodys]}}
+  - {name: "Fitch Ratings", guesses: {workday: [[fitch, wd1], [fitch, wd5], [fitchratings, wd1]], greenhouse: [fitchratings, fitch]}}
+  - {name: "Morningstar DBRS", guesses: {workday: [[morningstar, wd5], [morningstar, wd1]]}}
+  - {name: "Jefferies", guesses: {workday: [[jefferies, wd5], [jefferies, wd1], [jefferies, wd3]], greenhouse: [jefferies]}}
+  - {name: "Lincoln International", guesses: {workday: [[lincolninternational, wd1], [lincolninternational, wd5]], greenhouse: [lincolninternational], lever: [lincolninternational]}}
+  - {name: "William Blair", guesses: {workday: [[williamblair, wd1], [williamblair, wd5]], greenhouse: [williamblair]}}
+  - {name: "Baird", guesses: {workday: [[rwbaird, wd1], [baird, wd1], [rwbaird, wd5]], greenhouse: [baird, rwbaird]}}
+  - {name: "Evercore", guesses: {workday: [[evercore, wd1], [evercore, wd5]], greenhouse: [evercore]}}
+  - {name: "Lazard", guesses: {workday: [[lazard, wd1], [lazard, wd3], [lazard, wd5]], greenhouse: [lazard]}}
+  - {name: "Perella Weinberg", guesses: {greenhouse: [perellaweinbergpartners, pwp, perellaweinberg], workday: [[pwpartners, wd1]]}}
+  - {name: "Centerview", guesses: {greenhouse: [centerviewpartners, centerview]}}
+  - {name: "Solomon Partners", guesses: {greenhouse: [solomonpartners, solomon], lever: [solomonpartners]}}
+  - {name: "Stifel", guesses: {workday: [[stifel, wd1], [stifel, wd5]]}}
+  - {name: "Truist", guesses: {workday: [[truist, wd1], [truist, wd5]]}}
+  - {name: "RBC", guesses: {workday: [[rbc, wd3], [rbc, wd1]]}}
+  - {name: "Scotiabank", guesses: {workday: [[scotiabank, wd3], [scotiabank, wd1]]}}
+  - {name: "Northern Trust", guesses: {workday: [[ntrs, wd1], [northerntrust, wd1], [ntrs, wd5]]}}
+  - {name: "Fifth Third", guesses: {workday: [[fifththird, wd5], [53, wd5], [fifththird, wd1]]}}
+  - {name: "PNC", guesses: {workday: [[pnc, wd5]]}}
+  - {name: "Citizens", guesses: {workday: [[citizensbank, wd5], [citizens, wd5]]}}
+  - {name: "Huntington", guesses: {workday: [[huntington, wd12], [huntington, wd1]]}}
+  - {name: "Morgan Stanley", guesses: {workday: [[ms, wd5]]}}
+  - {name: "Golub Capital", guesses: {workday: [[golubcapital, wd1], [golub, wd1]], greenhouse: [golubcapital], lever: [golubcapital]}}
+  - {name: "Antares Capital", guesses: {workday: [[antares, wd1], [antarescapital, wd1]], greenhouse: [antarescapital], lever: [antares]}}
+  - {name: "Monroe Capital", guesses: {greenhouse: [monroecapital], lever: [monroecapital]}}
+  - {name: "Twin Brook", guesses: {greenhouse: [twinbrook, twinbrookcapital], lever: [twinbrook]}}
+  - {name: "Sixth Street", guesses: {greenhouse: [sixthstreet, sixthstreetpartners], lever: [sixthstreet]}}
+  - {name: "Ares", guesses: {workday: [[aresmgmt, wd1], [ares, wd1]], greenhouse: [aresmanagement]}}
+  - {name: "Blue Owl", guesses: {workday: [[blueowl, wd1]], greenhouse: [blueowl], lever: [blueowl]}}
+  - {name: "HPS Investment Partners", guesses: {greenhouse: [hpsinvestmentpartners, hps], lever: [hps]}}
+  - {name: "KKR", guesses: {workday: [[kkr, wd1], [kkr, wd5]], greenhouse: [kkr]}}
+  - {name: "Brinley Partners", guesses: {greenhouse: [brinleypartners, brinley], lever: [brinley], ashby: [brinley, brinleypartners]}}
+  - {name: "Rockefeller Capital Management", guesses: {workday: [[rockco, wd1], [rockefeller, wd1]], greenhouse: [rockefellercapitalmanagement, rockco]}}
+  - {name: "Configure Partners", guesses: {greenhouse: [configurepartners], lever: [configurepartners]}}
+  - {name: "Berenson", guesses: {greenhouse: [berenson, berensonco]}}
+  - {name: "Hyde Park Capital", guesses: {greenhouse: [hydeparkcapital], lever: [hydeparkcapital]}}
+  - {name: "Brown Gibbons Lang", guesses: {greenhouse: [bgllc, browngibbonslang], lever: [bgllc]}}
+  - {name: "Gibson Energy", guesses: {workday: [[gibsonenergy, wd3], [gibsonenergy, wd1]]}}
