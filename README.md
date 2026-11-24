@@ -1,4 +1,4 @@
-# Internship Finder
+# Internship Finder + Recruiting Hub
 
 Checks the job boards of finance firms every morning, keeps only internships,
 judges whether a **May 2028 graduate** can apply, and shows everything on a
@@ -43,11 +43,22 @@ Repo → **Actions** → **Daily internship scan** → **Run workflow**. When it
 (5 to 15 minutes), refresh the dashboard. The first run marks everything as
 new, so the first email will be long.
 
+## The hub tabs
+- **Jobs:** click **Apply** to open the posting. When you come back, the card asks
+  "Did you submit it?" Click **Yes** and it's logged as applied with today's date.
+  **People + messages** shows LinkedIn searches for alumni and analysts at that firm,
+  plus message drafts with the firm and role filled in. Nothing about contacts is saved.
+- **Tracker:** every application, its status (OA, interview, superday, offer…),
+  and the next step. Add applications you found elsewhere.
+- **Technicals:** about 100 original interview questions with flashcards. Missed ones come back sooner.
+- **Excel:** shortcut and function quizzes, plus model-building drills checked against the answer.
+- **Sync:** sign in with a GitHub token (Gist permission only) to sync progress
+  between computers. Progress is stored in a private Gist in your account.
+
 ## Daily use
 - **Dashboard defaults:** Eligible + Unclear, US only, finance roles only.
 - **Unclear** means it's a summer 2027 role that doesn't state graduation dates.
   Usually fine; open the posting to confirm.
-- Tick **Applied** to grey a posting out. This is saved in your browser only.
 - **Process:** apply, then message a contact at that firm within 24 hours, and log it
   in your networking tracker.
 

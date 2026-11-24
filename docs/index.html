@@ -3,171 +3,516 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Internship Finder</title>
+<title>Finance Recruiting Hub</title>
 <style>
   :root {
     --bg: #f6f7f9; --panel: #ffffff; --ink: #1b1f24; --muted: #5b6470; --line: #e3e6ea;
-    --accent: #1f4fd1; --good: #1a7f37; --good-bg: #e8f5ec; --warn: #9a6700; --warn-bg: #fff6dc;
+    --accent: #1f4fd1; --accent-ink: #ffffff; --good: #1a7f37; --good-bg: #e8f5ec; --warn: #9a6700; --warn-bg: #fff6dc;
     --bad: #8c2f2f; --bad-bg: #fbeaea; --new: #6f42c1; --new-bg: #f1ebfb; --chip: #eef1f5;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #0f1216; --panel: #171b21; --ink: #e6e9ed; --muted: #9aa4af; --line: #2a3038;
-      --accent: #7aa2ff; --good: #5fd38a; --good-bg: #16301f; --warn: #e5b94d; --warn-bg: #352a10;
+      --accent: #7aa2ff; --accent-ink: #0f1216; --good: #5fd38a; --good-bg: #16301f; --warn: #e5b94d; --warn-bg: #352a10;
       --bad: #f08a8a; --bad-bg: #3a1c1c; --new: #b89cf0; --new-bg: #2a2140; --chip: #222831;
     }
   }
   :root[data-theme="dark"] {
     --bg: #0f1216; --panel: #171b21; --ink: #e6e9ed; --muted: #9aa4af; --line: #2a3038;
-    --accent: #7aa2ff; --good: #5fd38a; --good-bg: #16301f; --warn: #e5b94d; --warn-bg: #352a10;
+    --accent: #7aa2ff; --accent-ink: #0f1216; --good: #5fd38a; --good-bg: #16301f; --warn: #e5b94d; --warn-bg: #352a10;
     --bad: #f08a8a; --bad-bg: #3a1c1c; --new: #b89cf0; --new-bg: #2a2140; --chip: #222831;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink);
          font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
-  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 14px; }
-  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 16px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 17px; margin: 0 0 10px; }
   .sub { color: var(--muted); }
+  .hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .syncpill { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--chip); color: var(--muted); cursor: pointer; border: 0; font-family: inherit; }
+  .syncpill.on { background: var(--good-bg); color: var(--good); }
+  .syncpill.err { background: var(--bad-bg); color: var(--bad); }
+  nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 14px; overflow-x: auto; }
+  nav.tabs button { font: inherit; font-weight: 600; color: var(--muted); background: none; border: 0;
+    border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; white-space: nowrap; }
+  nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+  section[hidden] { display: none !important; }
   .demo { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn);
           padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0 16px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 0 0 14px; }
   .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
   .stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
   .stat span { color: var(--muted); font-size: 12px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
   .filters { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px;
              display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 14px; }
   .filters label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; }
-  .filters select, .filters input[type=search] {
+  select, input[type=search], input[type=text], input[type=password], input[type=url], textarea, input[type=number] {
     font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
-    border-radius: 8px; padding: 6px 8px; }
+    border-radius: 8px; padding: 6px 8px; max-width: 100%; }
   .filters input[type=search] { flex: 1 1 200px; min-width: 0; }
   .group { display: inline-flex; gap: 10px; flex-wrap: wrap; padding-right: 12px; border-right: 1px solid var(--line); }
   .group:last-child { border-right: 0; }
   .list { display: grid; gap: 10px; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
           display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; }
-  .card.applied { opacity: .55; }
+  .card.applied { border-left: 4px solid var(--good); }
+  .card.started { border-left: 4px solid var(--warn); }
   .card.closed { opacity: .5; }
   .title { font-weight: 600; font-size: 15px; }
-  .title a { color: var(--accent); text-decoration: none; }
-  .title a:hover { text-decoration: underline; }
+  .title a, a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
   .co { font-weight: 700; }
   .meta { color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; }
   .reason { color: var(--muted); font-size: 12.5px; }
   .badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; }
   .b { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-  .b.Eligible { background: var(--good-bg); color: var(--good); }
-  .b.Unclear { background: var(--warn-bg); color: var(--warn); }
-  .b.Not { background: var(--bad-bg); color: var(--bad); }
+  .b.Eligible, .b.good { background: var(--good-bg); color: var(--good); }
+  .b.Unclear, .b.warn { background: var(--warn-bg); color: var(--warn); }
+  .b.Not, .b.bad { background: var(--bad-bg); color: var(--bad); }
   .b.new { background: var(--new-bg); color: var(--new); }
   .b.track { background: var(--chip); color: var(--muted); font-weight: 500; }
   .b.dl { background: var(--bad-bg); color: var(--bad); }
   .side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-  .applied-toggle { font-size: 12px; color: var(--muted); }
-  details { margin-top: 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  .btn { font: inherit; font-size: 13px; font-weight: 600; border-radius: 8px; padding: 5px 11px; cursor: pointer;
+         border: 1px solid var(--line); background: var(--panel); color: var(--ink); white-space: nowrap; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.good { background: var(--good-bg); color: var(--good); border-color: transparent; }
+  .btn.bad { background: var(--bad-bg); color: var(--bad); border-color: transparent; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .ask { font-size: 13px; color: var(--warn); font-weight: 600; }
+  .net { grid-column: 1 / -1; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 4px; display: grid; gap: 10px; }
+  .net .links { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .msg { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .msg .mh { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 4px;
+             font-size: 12px; color: var(--muted); font-weight: 600; }
+  .msg textarea { width: 100%; min-height: 70px; resize: vertical; }
+  .hint { color: var(--muted); font-size: 12.5px; }
+  details.box { margin-top: 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
   summary { cursor: pointer; font-weight: 600; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
-  td, th { text-align: left; padding: 5px 6px; border-top: 1px solid var(--line); vertical-align: top; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td, th { text-align: left; padding: 6px; border-top: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; border-top: 0; }
   .ok { color: var(--good); } .err { color: var(--bad); }
   .empty { color: var(--muted); text-align: center; padding: 30px; background: var(--panel);
            border: 1px dashed var(--line); border-radius: 10px; }
-  .themebtn { margin-left: auto; font: inherit; color: var(--muted); background: none; border: 1px solid var(--line);
-              border-radius: 8px; padding: 4px 10px; cursor: pointer; }
-  @media (max-width: 640px) {
+  .tablewrap { overflow-x: auto; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  /* flashcards */
+  .flash { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px; min-height: 220px;
+           display: flex; flex-direction: column; gap: 14px; }
+  .flash .q { font-size: 18px; font-weight: 600; line-height: 1.4; }
+  .flash .a { font-size: 15px; line-height: 1.55; border-top: 1px solid var(--line); padding-top: 12px; white-space: pre-wrap; }
+  .catgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+  .cat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+  .bar { height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; margin-top: 6px; display: flex; }
+  .bar i { display: block; height: 100%; }
+  .bar i.g { background: var(--good); } .bar i.r { background: var(--bad); }
+  .opts { display: grid; gap: 8px; }
+  .opt { text-align: left; font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line);
+         background: var(--bg); color: var(--ink); cursor: pointer; }
+  .opt.right { background: var(--good-bg); border-color: var(--good); color: var(--good); font-weight: 600; }
+  .opt.wrong { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+  .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+  .inputs td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .drill { display: grid; grid-template-columns: 1fr 150px auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+  .drill .res { font-size: 12.5px; grid-column: 1 / -1; }
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg);
+           padding: 8px 14px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .95; }
+  @media (max-width: 720px) {
     .card { grid-template-columns: 1fr; }
     .side { align-items: flex-start; }
-    .badges { justify-content: flex-start; }
+    .badges, .actions { justify-content: flex-start; }
     .group { border-right: 0; padding-right: 0; }
+    .grid2 { grid-template-columns: 1fr; }
+    .drill { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Internship Finder</h1>
+    <h1>Finance Recruiting Hub</h1>
     <span class="sub" id="updated">Loading…</span>
-    <button class="themebtn" id="theme" type="button">Theme</button>
+    <div class="hdr-right">
+      <button class="syncpill" id="syncPill" type="button">Not synced</button>
+      <button class="btn" id="theme" type="button">Theme</button>
+    </div>
   </header>
-  <div id="demo" class="demo" hidden>DEMO DATA: sample postings for preview only. Real results appear after the first GitHub run.</div>
 
-  <div class="stats" id="stats"></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="jobs">Jobs</button>
+    <button role="tab" data-tab="tracker">Tracker</button>
+    <button role="tab" data-tab="tech">Technicals</button>
+    <button role="tab" data-tab="excel">Excel</button>
+    <button role="tab" data-tab="sync">Sync</button>
+  </nav>
 
-  <div class="filters">
-    <div class="group">
-      <label><input type="checkbox" id="fEligible" checked> Eligible</label>
-      <label><input type="checkbox" id="fUnclear" checked> Unclear</label>
-      <label><input type="checkbox" id="fNot"> Not eligible</label>
+  <!-- ============================== JOBS -->
+  <section id="tab-jobs">
+    <div id="demo" class="demo" hidden>DEMO DATA: sample postings for preview only.</div>
+    <div class="stats" id="stats"></div>
+    <div class="filters">
+      <div class="group">
+        <label><input type="checkbox" id="fEligible" checked> Eligible</label>
+        <label><input type="checkbox" id="fUnclear" checked> Unclear</label>
+        <label><input type="checkbox" id="fNot"> Not eligible</label>
+      </div>
+      <div class="group">
+        <label><input type="checkbox" id="fUS" checked> US only</label>
+        <label><input type="checkbox" id="fFinance" checked> Finance roles only</label>
+        <label><input type="checkbox" id="fNew"> New (3 days)</label>
+        <label><input type="checkbox" id="fClosed"> Show closed</label>
+        <label><input type="checkbox" id="fHideApplied"> Hide applied</label>
+      </div>
+      <select id="fTrack"><option value="">All tracks</option></select>
+      <select id="fCity"><option value="">All cities</option></select>
+      <input type="search" id="fText" placeholder="Search firm or title…">
     </div>
-    <div class="group">
-      <label><input type="checkbox" id="fUS" checked> US only</label>
-      <label><input type="checkbox" id="fFinance" checked> Finance roles only</label>
-      <label><input type="checkbox" id="fNew"> New (3 days)</label>
-      <label><input type="checkbox" id="fClosed"> Show closed</label>
-      <label><input type="checkbox" id="fHideApplied"> Hide applied</label>
+    <div class="list" id="list"></div>
+    <details class="box" id="sourcesBox">
+      <summary id="sourcesSummary">Job boards checked</summary>
+      <div class="tablewrap"><table><thead><tr><th>Firm</th><th>System</th><th>Status</th><th>Internships</th></tr></thead><tbody id="sources"></tbody></table></div>
+    </details>
+  </section>
+
+  <!-- ============================== TRACKER -->
+  <section id="tab-tracker" hidden>
+    <div class="stats" id="tStats"></div>
+    <div class="panel" style="margin-bottom:14px">
+      <h2>Add an application found elsewhere</h2>
+      <form id="addForm" class="row">
+        <input type="text" id="addCo" placeholder="Firm" required style="flex:1 1 140px">
+        <input type="text" id="addTitle" placeholder="Role" required style="flex:2 1 220px">
+        <input type="url" id="addUrl" placeholder="Posting link (optional)" style="flex:2 1 220px">
+        <select id="addStatus"><option>Applied</option><option>Started</option></select>
+        <button class="btn primary" type="submit">Add</button>
+      </form>
     </div>
-    <select id="fTrack"><option value="">All tracks</option></select>
-    <select id="fCity"><option value="">All cities</option></select>
-    <input type="search" id="fText" placeholder="Search firm or title…">
-  </div>
+    <div class="row" style="margin-bottom:10px">
+      <label class="hint"><input type="checkbox" id="tHideClosed"> Hide rejected / withdrawn</label>
+    </div>
+    <div class="panel tablewrap"><table>
+      <thead><tr><th>Firm / role</th><th>Status</th><th>Applied</th><th>Next step</th><th>Notes</th><th></th></tr></thead>
+      <tbody id="tBody"></tbody></table></div>
+  </section>
 
-  <div class="list" id="list"></div>
+  <!-- ============================== TECHNICALS -->
+  <section id="tab-tech" hidden>
+    <div class="catgrid" id="catStats" style="margin-bottom:14px"></div>
+    <div class="filters">
+      <select id="qCat"><option value="">All topics</option></select>
+      <select id="qMode">
+        <option value="smart">Weakest first</option>
+        <option value="new">Not seen yet</option>
+        <option value="missed">Missed last time</option>
+        <option value="shuffle">Shuffle</option>
+      </select>
+      <select id="qLvl"><option value="">All levels</option><option value="1">Basic</option><option value="2">Intermediate</option><option value="3">Advanced</option></select>
+      <span class="hint" id="qCount"></span>
+    </div>
+    <div class="flash" id="flash">
+      <div class="row"><span class="b track" id="fcCat"></span><span class="b track" id="fcLvl"></span><span class="hint" id="fcHist"></span></div>
+      <div class="q" id="fcQ"></div>
+      <textarea id="fcTry" placeholder="Say it out loud or type your answer, then reveal." rows="3"></textarea>
+      <div class="a" id="fcA" hidden></div>
+      <div class="row" id="fcBtns"></div>
+    </div>
+    <p class="hint">Answer out loud first, like a real interview. Mark yourself honestly: questions you miss come back sooner.</p>
+  </section>
 
-  <details id="sourcesBox">
-    <summary id="sourcesSummary">Job boards checked</summary>
-    <table><thead><tr><th>Firm</th><th>System</th><th>Status</th><th>Internships</th></tr></thead><tbody id="sources"></tbody></table>
-  </details>
+  <!-- ============================== EXCEL -->
+  <section id="tab-excel" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <h2>Shortcut and function quiz</h2>
+        <div class="row" style="margin-bottom:10px">
+          <select id="xSet"><option value="s">Keyboard shortcuts (Windows)</option><option value="f">Which function / tool?</option></select>
+          <span class="hint" id="xScore"></span>
+        </div>
+        <div class="q" id="xQ" style="font-weight:600;margin-bottom:10px"></div>
+        <div class="opts" id="xOpts"></div>
+        <div class="row" style="margin-top:10px"><button class="btn" id="xNext" type="button">Next</button></div>
+      </div>
+      <div class="panel">
+        <h2 id="caseTitle"></h2>
+        <p class="hint">Build these in a blank Excel sheet with formulas (no calculator), then type your result. Each one is checked.</p>
+        <table class="inputs"><tbody id="caseInputs"></tbody></table>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">Model-building drills</h2>
+        <button class="btn" id="dReset" type="button">Clear my answers</button></div>
+      <div id="drills"></div>
+    </div>
+  </section>
+
+  <!-- ============================== SYNC -->
+  <section id="tab-sync" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <h2>Sign in to sync across computers</h2>
+        <p>Your tracker, technicals and Excel progress save to a <b>private Gist in your own GitHub account</b>. Sign in once on each computer with the same token and everything stays in sync.</p>
+        <div id="signedOut">
+          <ol class="hint" style="padding-left:18px">
+            <li>Open <a href="https://github.com/settings/tokens/new?scopes=gist&description=Recruiting%20Hub%20sync" target="_blank" rel="noopener">this GitHub page</a> (it pre-fills a token that can only touch Gists).</li>
+            <li>Set Expiration to "No expiration" or 1 year, scroll down, click <b>Generate token</b>.</li>
+            <li>Copy the token (starts with <span class="kbd">ghp_</span>) and paste it below. Save it in your password manager to use on your other computer.</li>
+          </ol>
+          <div class="row"><input type="password" id="tokenIn" placeholder="ghp_…" style="flex:1 1 260px" autocomplete="off">
+            <button class="btn primary" id="signIn" type="button">Sign in</button></div>
+        </div>
+        <div id="signedIn" hidden>
+          <p class="ok" id="whoami"></p>
+          <div class="row"><button class="btn" id="syncNow" type="button">Sync now</button>
+            <button class="btn bad" id="signOut" type="button">Sign out on this computer</button></div>
+        </div>
+        <p class="hint" id="syncMsg"></p>
+      </div>
+      <div class="panel">
+        <h2>What's saved</h2>
+        <ul class="hint" style="padding-left:18px">
+          <li>Application status and dates, and your notes on each application.</li>
+          <li>Which technicals you got right or missed.</li>
+          <li>Excel drill answers and quiz scores.</li>
+        </ul>
+        <p class="hint">Nothing about people you contact is stored. The networking links and messages are generated fresh each time.</p>
+        <p class="hint">Without signing in, progress still saves in this browser only.</p>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="exportBtn" type="button">Download backup</button>
+          <label class="btn" style="font-weight:600">Restore backup<input type="file" id="importIn" accept="application/json" hidden></label>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
+<div class="toast" id="toast"></div>
 
+<script src="questions.js"></script>
+<script src="excel.js"></script>
 <script>
 (function () {
-  var store = {
+  "use strict";
+  /* ================================================================ storage */
+  var LS = {
     get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
   };
-  var applied = store.get("applied", {});
-  var themeBtn = document.getElementById("theme");
-  var theme = store.get("theme", "");
+  var now = function () { return Date.now(); };
+  var today = function () { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function safeUrl(u) { return /^https:\/\//i.test(u || "") ? u : ""; }
+  function toast(t) { var el = document.getElementById("toast"); el.textContent = t; el.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(function () { el.classList.remove("show"); }, 1800); }
+
+  /* Progress: every entry carries t (ms). Merging keeps the newer entry per key. */
+  var SECTIONS = ["apps", "quiz", "xq", "drills"];
+  function blank() { var s = { v: 1 }; SECTIONS.forEach(function (k) { s[k] = {}; }); return s; }
+  var P = LS.get("hub-progress", null) || blank();
+  SECTIONS.forEach(function (k) { if (!P[k]) P[k] = {}; });
+  // Migrate the old "Applied" checkboxes.
+  var oldApplied = LS.get("applied", null);
+  if (oldApplied) {
+    Object.keys(oldApplied).forEach(function (id) {
+      if (!P.apps[id]) P.apps[id] = { status: "Applied", applied: oldApplied[id], t: now() };
+    });
+    LS.del("applied");
+  }
+  function merge(a, b) {
+    var out = blank();
+    SECTIONS.forEach(function (k) {
+      var A = a[k] || {}, B = b[k] || {};
+      Object.keys(A).concat(Object.keys(B)).forEach(function (id) {
+        var x = A[id], y = B[id];
+        out[k][id] = !x ? y : !y ? x : ((y.t || 0) > (x.t || 0) ? y : x);
+      });
+    });
+    return out;
+  }
+  function save(section, id, val) {
+    val.t = now(); P[section][id] = val;
+    LS.set("hub-progress", P); Sync.schedule();
+  }
+
+  /* ================================================================ sync (GitHub Gist) */
+  var Sync = (function () {
+    var FILE = "recruiting-hub-progress.json", DESC = "Recruiting Hub progress (private)";
+    var token = LS.get("gh-token", ""), gistId = LS.get("gh-gist", ""), timer = null, busy = false, again = false;
+    var pill = document.getElementById("syncPill");
+    function status(text, cls) { pill.textContent = text; pill.className = "syncpill" + (cls ? " " + cls : "");
+      document.getElementById("syncMsg").textContent = cls === "err" ? text : ""; }
+    function api(path, opt) {
+      opt = opt || {};
+      opt.headers = { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json" };
+      return fetch("https://api.github.com" + path, opt).then(function (r) {
+        if (r.status === 401) throw new Error("Token rejected. Sign in again with a new token.");
+        if (r.status === 404) { var e = new Error("not found"); e.code = 404; throw e; }
+        if (!r.ok) throw new Error("GitHub error " + r.status);
+        return r.json();
+      });
+    }
+    function findGist() {
+      if (gistId) return Promise.resolve(gistId);
+      function page(n) {
+        return api("/gists?per_page=100&page=" + n).then(function (list) {
+          var hit = list.filter(function (g) { return g.files && g.files[FILE]; })[0];
+          if (hit) return hit.id;
+          if (list.length === 100 && n < 5) return page(n + 1);
+          return api("/gists", { method: "POST", body: JSON.stringify({ description: DESC, public: false,
+            files: { [FILE]: { content: JSON.stringify(P) } } }) }).then(function (g) { return g.id; });
+        });
+      }
+      return page(1).then(function (id) { gistId = id; LS.set("gh-gist", id); return id; });
+    }
+    function pull(id) {
+      return api("/gists/" + id).then(function (g) {
+        var f = g.files && g.files[FILE];
+        if (!f) return null;
+        if (f.truncated && f.raw_url) return fetch(f.raw_url).then(function (r) { return r.json(); });
+        try { return JSON.parse(f.content); } catch (e) { return null; }
+      });
+    }
+    function run() {
+      if (!token) { status("Not synced"); return Promise.resolve(); }
+      if (busy) { again = true; return Promise.resolve(); }
+      busy = true; status("Syncing…");
+      return findGist().then(function (id) {
+        return pull(id).then(function (remote) {
+          var before = JSON.stringify(P);
+          if (remote) P = merge(P, remote);
+          LS.set("hub-progress", P);
+          if (JSON.stringify(P) !== before) App.refresh();
+          if (remote && JSON.stringify(remote) === JSON.stringify(P)) return;
+          return api("/gists/" + id, { method: "PATCH", body: JSON.stringify({ files: { [FILE]: { content: JSON.stringify(P) } } }) });
+        });
+      }).then(function () {
+        var t = new Date(); status("Synced " + t.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), "on");
+      }).catch(function (e) {
+        if (e.code === 404) { gistId = ""; LS.del("gh-gist"); }
+        status(e.message || "Sync failed", "err");
+      }).then(function () { busy = false; if (again) { again = false; schedule(); } });
+    }
+    function schedule() { if (!token) return; clearTimeout(timer); timer = setTimeout(run, 1500); }
+    function signIn(t) {
+      token = t.trim(); gistId = "";
+      return api("/user").then(function (u) {
+        LS.set("gh-token", token); LS.set("gh-login", u.login); renderAuth(); return run();
+      }).catch(function (e) { token = ""; status(e.message, "err"); throw e; });
+    }
+    function signOut() { token = ""; gistId = ""; LS.del("gh-token"); LS.del("gh-gist"); LS.del("gh-login"); renderAuth(); status("Not synced"); }
+    function renderAuth() {
+      var on = !!token;
+      document.getElementById("signedOut").hidden = on;
+      document.getElementById("signedIn").hidden = !on;
+      document.getElementById("whoami").textContent = on ? "Signed in as " + (LS.get("gh-login", "") || "GitHub user") + ". Progress syncs automatically." : "";
+    }
+    window.addEventListener("focus", function () { if (token) run(); });
+    return { run: run, schedule: schedule, signIn: signIn, signOut: signOut, renderAuth: renderAuth, on: function () { return !!token; } };
+  })();
+
+  /* ================================================================ tabs + theme */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+  function showTab(name) {
+    tabs.forEach(function (b) { var on = b.getAttribute("data-tab") === name; b.setAttribute("aria-selected", on);
+      document.getElementById("tab-" + b.getAttribute("data-tab")).hidden = !on; });
+    LS.set("tab", name);
+    if (name === "tracker") renderTracker();
+    if (name === "tech") renderTech();
+  }
+  tabs.forEach(function (b) { b.onclick = function () { showTab(b.getAttribute("data-tab")); }; });
+  document.getElementById("syncPill").onclick = function () { showTab("sync"); };
+  var theme = LS.get("theme", "");
   if (theme) document.documentElement.setAttribute("data-theme", theme);
-  themeBtn.onclick = function () {
+  document.getElementById("theme").onclick = function () {
     var cur = document.documentElement.getAttribute("data-theme");
     var dark = cur ? cur === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
     var next = dark ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next); store.set("theme", next);
+    document.documentElement.setAttribute("data-theme", next); LS.set("theme", next);
   };
 
+  /* ================================================================ JOBS */
   var ids = ["fEligible","fUnclear","fNot","fUS","fFinance","fNew","fClosed","fHideApplied","fTrack","fCity","fText"];
   var el = {}; ids.forEach(function (i) { el[i] = document.getElementById(i); });
-  var saved = store.get("filters", null);
+  var saved = LS.get("filters", null);
   if (saved) ids.forEach(function (i) {
     if (!(i in saved)) return;
     if (el[i].type === "checkbox") el[i].checked = saved[i]; else if (i !== "fText") el[i].value = saved[i];
   });
-
   var DATA = { jobs: [], sources: [] };
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-  function daysAgo(iso) { if (!iso) return 999; return (Date.now() - Date.parse(iso + "T12:00:00")) / 864e5; }
-
+  var openNet = {};
+  function daysAgo(iso) { if (!iso) return 999; return (Date.now() - Date.parse(String(iso).slice(0, 10) + "T12:00:00")) / 864e5; }
   function fillSelect(sel, values) {
     var keep = sel.value;
     values.forEach(function (v) { var o = document.createElement("option"); o.value = v; o.textContent = v; sel.appendChild(o); });
     if (keep && values.indexOf(keep) >= 0) sel.value = keep;
   }
+  function appOf(id) { var a = P.apps[id]; return a && !a.deleted ? a : null; }
 
-  function render() {
+  /* Networking: generated on demand, never stored. */
+  function shortRole(title) {
+    return String(title || "internship").replace(/\s*[\(\[].*?[\)\]]\s*/g, " ").replace(/\s+-\s+.*$/, "").replace(/\s+/g, " ").trim().slice(0, 70);
+  }
+  function teamOf(j) {
+    var t = j.track || "";
+    if (/Investment Banking/.test(t)) return "investment banking";
+    if (/Private Credit/.test(t)) return "private credit";
+    if (/Commercial|Corporate Banking/.test(t)) return "corporate banking";
+    if (/Equity Research/.test(t)) return "equity research";
+    if (/Private Equity/.test(t)) return "investing";
+    if (/Markets/.test(t)) return "markets";
+    if (/Ratings/.test(t)) return "ratings";
+    return "finance";
+  }
+  function li(q) { return "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(q); }
+  function netHtml(j) {
+    var co = j.company, role = shortRole(j.title), team = teamOf(j);
+    var city = j.city && j.city !== "Other" ? j.city : "";
+    var links = [
+      [co + " + Texas A&M alumni", co + " Texas A&M"],
+      [co + " + TAMUCC", co + " Texas A&M Corpus Christi"],
+      [co + " " + team + " analysts", co + " " + team + " analyst"],
+      [co + " campus recruiting", co + " campus recruiter"]
+    ];
+    if (city) links.splice(2, 0, [co + " in " + city, co + " " + team + " " + city]);
+    var connect = "Hi {first}, I'm Josh, a finance junior at Texas A&M-Corpus Christi. I just applied for " + co + "'s " + role +
+      " and would really value 15 minutes to hear how you got into " + team + ". Thank you!";
+    if (connect.length > 300) connect = "Hi {first}, I'm Josh, a finance junior at Texas A&M-Corpus Christi. I just applied to " + co +
+      "'s summer program and would value 15 minutes to hear about your path into " + team + ". Thank you!";
+    var follow = "Hi {first},\n\nThanks for connecting. I'm a junior studying finance at Texas A&M-Corpus Christi (graduating May 2028), and I just submitted my application for the " +
+      role + " role at " + co + ".\n\nI'd love to hear how you ended up in " + team + " at " + co + " and what you think makes someone successful as an intern there. Would you have 15 minutes for a quick call in the next week or two? I'm flexible around your schedule.\n\nThank you,\nJosh Blair";
+    var thanks = "Hi {first}, thank you again for your time today. Your point about [something specific they said] was really helpful, and it made me even more excited about " + co +
+      ". I'll keep you posted on my application. Have a great week!\n\nJosh";
+    function box(label, txt, max) {
+      return '<div class="msg"><div class="mh"><span>' + esc(label) + (max ? ' · <span data-len>' + txt.length + '</span>/' + max + ' chars' : "") +
+        '</span><button class="btn" data-copy type="button">Copy</button></div><textarea>' + esc(txt) + '</textarea></div>';
+    }
+    return '<div class="net"><div class="hint">Find people (opens LinkedIn search). Replace {first} with their first name. Aim for 2 people per firm, within 24 hours of applying.</div>' +
+      '<div class="links">' + links.map(function (l) { return '<a href="' + esc(li(l[1])) + '" target="_blank" rel="noopener">' + esc(l[0]) + ' ↗</a>'; }).join("") + '</div>' +
+      box("Connection request note", connect, 300) + box("After they accept", follow) + box("Thank-you after a call", thanks) + '</div>';
+  }
+
+  function renderJobs() {
     var f = {}; ids.forEach(function (i) { f[i] = el[i].type === "checkbox" ? el[i].checked : el[i].value; });
-    store.set("filters", f);
+    LS.set("filters", f);
     var q = (f.fText || "").toLowerCase();
     var rows = DATA.jobs.filter(function (j) {
-      if (j.status !== "Open" && !f.fClosed) return false;
+      var a = appOf(j.id);
+      if (j.status !== "Open" && !f.fClosed && !a) return false;
       if (j.eligibility === "Eligible" && !f.fEligible) return false;
       if (j.eligibility === "Unclear" && !f.fUnclear) return false;
       if (j.eligibility === "Not eligible" && !f.fNot) return false;
       if (f.fUS && j.us === false) return false;
       if (f.fFinance && j.track === "Non-finance") return false;
       if (f.fNew && daysAgo(j.first_seen) > 3) return false;
-      if (f.fHideApplied && applied[j.id]) return false;
+      if (f.fHideApplied && a && a.status !== "Started") return false;
       if (f.fTrack && j.track !== f.fTrack) return false;
       if (f.fCity && j.city !== f.fCity) return false;
       if (q && (j.company + " " + j.title + " " + j.location).toLowerCase().indexOf(q) < 0) return false;
@@ -183,13 +528,27 @@
     var list = document.getElementById("list");
     if (!rows.length) { list.innerHTML = '<div class="empty">No postings match these filters.</div>'; return; }
     list.innerHTML = rows.map(function (j) {
+      var a = appOf(j.id), st = a ? a.status : "";
       var isNew = daysAgo(j.first_seen) <= 3 && j.status === "Open";
       var cls = j.eligibility === "Not eligible" ? "Not" : j.eligibility;
-      return '<div class="card' + (applied[j.id] ? " applied" : "") + (j.status !== "Open" ? " closed" : "") + '">' +
-        '<div><div class="title"><span class="co">' + esc(j.company) + '</span> · <a href="' + esc(j.url) +
-        '" target="_blank" rel="noopener">' + esc(j.title) + '</a></div>' +
+      var url = safeUrl(j.url);
+      var act;
+      if (st === "Started") {
+        act = '<span class="ask">Did you submit it?</span>' +
+          '<button class="btn good" data-act="submitted" type="button">Yes, submitted</button>' +
+          '<button class="btn" data-act="notyet" type="button">Not yet</button>';
+      } else if (st) {
+        act = '<span class="b good">' + esc(st) + (a.applied ? " · " + esc(a.applied) : "") + '</span>' +
+          '<button class="btn" data-act="tracker" type="button">Update</button>';
+      } else {
+        act = (url ? '<button class="btn primary" data-act="apply" type="button">Apply ↗</button>' : "");
+      }
+      act += '<button class="btn" data-act="net" type="button">' + (openNet[j.id] ? "Hide people" : "People + messages") + '</button>';
+      return '<div class="card' + (st === "Started" ? " started" : st ? " applied" : "") + (j.status !== "Open" ? " closed" : "") + '" data-id="' + esc(j.id) + '">' +
+        '<div><div class="title"><span class="co">' + esc(j.company) + '</span> · ' +
+        (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(j.title) + '</a>' : esc(j.title)) + '</div>' +
         '<div class="meta"><span>' + esc(j.location || "Location not listed") + '</span>' +
-        (j.posted ? '<span>' + esc(j.posted) + '</span>' : "") +
+        (j.posted ? '<span>Posted ' + esc(String(j.posted).slice(0, 10)) + '</span>' : "") +
         '<span>First seen ' + esc(j.first_seen) + '</span>' +
         (j.status !== "Open" ? '<span>' + esc(j.status) + '</span>' : "") + '</div>' +
         '<div class="reason">' + esc(j.reason) + '</div></div>' +
@@ -198,33 +557,57 @@
         '<span class="b ' + cls + '">' + esc(j.eligibility) + '</span>' +
         (j.deadline ? '<span class="b dl">Due ' + esc(j.deadline) + '</span>' : "") +
         '<span class="b track">' + esc(j.track) + '</span></div>' +
-        '<label class="applied-toggle"><input type="checkbox" data-id="' + esc(j.id) + '"' +
-        (applied[j.id] ? " checked" : "") + '> Applied</label></div></div>';
+        '<div class="actions">' + act + '</div></div>' +
+        (openNet[j.id] ? netHtml(j) : "") + '</div>';
     }).join("");
   }
-
-  document.getElementById("list").addEventListener("change", function (e) {
-    var id = e.target.getAttribute("data-id"); if (!id) return;
-    if (e.target.checked) applied[id] = new Date().toISOString().slice(0, 10); else delete applied[id];
-    store.set("applied", applied); render();
+  function jobById(id) { for (var i = 0; i < DATA.jobs.length; i++) if (DATA.jobs[i].id === id) return DATA.jobs[i]; return null; }
+  document.getElementById("list").addEventListener("click", function (e) {
+    var copy = e.target.closest("[data-copy]");
+    if (copy) {
+      var ta = copy.closest(".msg").querySelector("textarea");
+      (navigator.clipboard ? navigator.clipboard.writeText(ta.value) : Promise.reject()).then(function () { toast("Copied"); },
+        function () { ta.select(); document.execCommand("copy"); toast("Copied"); });
+      return;
+    }
+    var b = e.target.closest("[data-act]"); if (!b) return;
+    var card = b.closest(".card"), id = card.getAttribute("data-id"), j = jobById(id); if (!j) return;
+    var act = b.getAttribute("data-act");
+    var base = { company: j.company, title: j.title, url: j.url, track: j.track };
+    if (act === "apply") {
+      window.open(safeUrl(j.url), "_blank", "noopener");
+      save("apps", id, Object.assign(base, { status: "Started", started: today() }));
+    } else if (act === "submitted") {
+      var a = appOf(id) || {};
+      save("apps", id, Object.assign(base, { status: "Applied", started: a.started || today(), applied: today(), notes: a.notes || "" }));
+      openNet[id] = true; toast("Marked applied. Now reach out to 2 people at " + j.company + ".");
+    } else if (act === "notyet") {
+      save("apps", id, { deleted: true });
+    } else if (act === "net") {
+      openNet[id] = !openNet[id];
+    } else if (act === "tracker") { showTab("tracker"); return; }
+    renderJobs(); renderStats();
   });
-  ids.forEach(function (i) { el[i].addEventListener(el[i].type === "search" ? "input" : "change", render); });
+  document.getElementById("list").addEventListener("input", function (e) {
+    if (e.target.tagName === "TEXTAREA") { var n = e.target.closest(".msg").querySelector("[data-len]"); if (n) n.textContent = e.target.value.length; }
+  });
+  ids.forEach(function (i) { el[i].addEventListener(el[i].type === "search" ? "input" : "change", renderJobs); });
 
-  function stats() {
+  function renderStats() {
     var open = DATA.jobs.filter(function (j) { return j.status === "Open" && j.us !== false && j.track !== "Non-finance"; });
     var n = function (p) { return open.filter(p).length; };
+    var apps = Object.keys(P.apps).map(function (k) { return P.apps[k]; }).filter(function (a) { return !a.deleted; });
     var items = [
-      ["Eligible", n(function (j) { return j.eligibility === "Eligible"; })],
+      ["Eligible open", n(function (j) { return j.eligibility === "Eligible"; })],
       ["Unclear (check)", n(function (j) { return j.eligibility === "Unclear"; })],
       ["New in 3 days", n(function (j) { return daysAgo(j.first_seen) <= 3 && j.eligibility !== "Not eligible"; })],
-      ["NY / Chicago", n(function (j) { return (j.city === "New York" || j.city === "Chicago") && j.eligibility !== "Not eligible"; })],
-      ["Marked applied", Object.keys(applied).length]
+      ["Applications sent", apps.filter(function (a) { return a.status !== "Started"; }).length],
+      ["Started, not submitted", apps.filter(function (a) { return a.status === "Started"; }).length]
     ];
     document.getElementById("stats").innerHTML = items.map(function (it) {
       return '<div class="stat"><b>' + it[1] + '</b><span>' + esc(it[0]) + '</span></div>'; }).join("");
   }
-
-  function sources() {
+  function renderSources() {
     var s = DATA.sources || [];
     var ok = s.filter(function (x) { return x.ok; }).length;
     document.getElementById("sourcesSummary").textContent = "Job boards checked: " + ok + " of " + s.length + " working";
@@ -233,17 +616,258 @@
         (x.ok ? "OK" : esc(x.error || "Error")) + '</td><td>' + esc(x.internships) + '</td></tr>'; }).join("");
   }
 
+  /* ================================================================ TRACKER */
+  var STATUSES = ["Started", "Applied", "Online assessment", "HireVue / phone screen", "Interview", "Superday", "Offer", "Rejected", "Withdrawn"];
+  var CLOSED = { "Rejected": 1, "Withdrawn": 1 };
+  function nextStep(a) {
+    if (a.status === "Started") return ["Finish and submit", "warn"];
+    if (CLOSED[a.status]) return ["", ""];
+    if (a.status === "Offer") return ["Decide / negotiate", "good"];
+    var d = a.applied ? Math.floor(daysAgo(a.applied)) : 0;
+    if (a.status === "Applied") {
+      if (d <= 1) return ["Reach out to 2 people at the firm", "warn"];
+      if (d >= 14) return ["Follow up with your contact (" + d + " days)", "bad"];
+      return ["Waiting · " + d + " days", ""];
+    }
+    return ["Prep for " + a.status.toLowerCase(), "warn"];
+  }
+  function renderTracker() {
+    var hide = document.getElementById("tHideClosed").checked;
+    var rows = Object.keys(P.apps).map(function (k) { return [k, P.apps[k]]; })
+      .filter(function (r) { return !r[1].deleted && !(hide && CLOSED[r[1].status]); });
+    var order = {}; STATUSES.forEach(function (s, i) { order[s] = i; });
+    rows.sort(function (x, y) {
+      var a = x[1], b = y[1];
+      return (!!CLOSED[a.status]) - (!!CLOSED[b.status]) || String(b.applied || b.started || "").localeCompare(String(a.applied || a.started || ""));
+    });
+    var all = Object.keys(P.apps).map(function (k) { return P.apps[k]; }).filter(function (a) { return !a.deleted; });
+    var c = function (p) { return all.filter(p).length; };
+    var wk = c(function (a) { return a.applied && daysAgo(a.applied) <= 7; });
+    document.getElementById("tStats").innerHTML = [
+      ["Submitted", c(function (a) { return a.status !== "Started"; })],
+      ["This week", wk],
+      ["In process", c(function (a) { return /assessment|HireVue|Interview|Superday/.test(a.status); })],
+      ["Offers", c(function (a) { return a.status === "Offer"; })],
+      ["Need follow-up", c(function (a) { return a.status === "Applied" && a.applied && daysAgo(a.applied) >= 14; })]
+    ].map(function (it) { return '<div class="stat"><b>' + it[1] + '</b><span>' + esc(it[0]) + '</span></div>'; }).join("");
+    var body = document.getElementById("tBody");
+    if (!rows.length) { body.innerHTML = '<tr><td colspan="6" class="hint" style="padding:20px;text-align:center">No applications yet. Click Apply on the Jobs tab, or add one above.</td></tr>'; return; }
+    body.innerHTML = rows.map(function (r) {
+      var id = r[0], a = r[1], ns = nextStep(a), url = safeUrl(a.url);
+      return '<tr data-id="' + esc(id) + '"><td><b>' + esc(a.company) + '</b><br>' +
+        (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(a.title) + '</a>' : esc(a.title)) + '</td>' +
+        '<td><select data-f="status">' + STATUSES.map(function (s) { return '<option' + (s === a.status ? " selected" : "") + '>' + s + '</option>'; }).join("") + '</select></td>' +
+        '<td><input type="text" data-f="applied" value="' + esc(a.applied || "") + '" placeholder="YYYY-MM-DD" style="width:110px"></td>' +
+        '<td>' + (ns[0] ? '<span class="b ' + ns[1] + '" style="white-space:normal">' + esc(ns[0]) + '</span>' : "") + '</td>' +
+        '<td><input type="text" data-f="notes" value="' + esc(a.notes || "") + '" placeholder="Referral, OA date…" style="width:100%;min-width:140px"></td>' +
+        '<td><button class="btn" data-del type="button" title="Remove">✕</button></td></tr>';
+    }).join("");
+  }
+  document.getElementById("tBody").addEventListener("change", function (e) {
+    var f = e.target.getAttribute("data-f"); if (!f) return;
+    var id = e.target.closest("tr").getAttribute("data-id"), a = Object.assign({}, P.apps[id]);
+    a[f] = e.target.value.trim();
+    if (f === "status" && a.status !== "Started" && !a.applied) a.applied = today();
+    save("apps", id, a); renderTracker(); renderJobs(); renderStats();
+  });
+  document.getElementById("tBody").addEventListener("click", function (e) {
+    if (!e.target.closest("[data-del]")) return;
+    var tr = e.target.closest("tr"), id = tr.getAttribute("data-id");
+    if (!confirm("Remove " + (P.apps[id].company || "this") + " from the tracker?")) return;
+    save("apps", id, { deleted: true }); renderTracker(); renderJobs(); renderStats();
+  });
+  document.getElementById("tHideClosed").onchange = renderTracker;
+  document.getElementById("addForm").onsubmit = function (e) {
+    e.preventDefault();
+    var st = document.getElementById("addStatus").value;
+    save("apps", "manual:" + now(), { company: document.getElementById("addCo").value.trim(), title: document.getElementById("addTitle").value.trim(),
+      url: document.getElementById("addUrl").value.trim(), status: st, started: today(), applied: st === "Applied" ? today() : "", notes: "" });
+    this.reset(); renderTracker(); renderStats(); toast("Added");
+  };
+
+  /* ================================================================ TECHNICALS */
+  var Q = window.QUESTIONS || [], CATS = window.QUESTION_CATS || {};
+  var qCat = document.getElementById("qCat"), qMode = document.getElementById("qMode"), qLvl = document.getElementById("qLvl");
+  Object.keys(CATS).forEach(function (k) { var o = document.createElement("option"); o.value = k; o.textContent = CATS[k]; qCat.appendChild(o); });
+  var qs = LS.get("q-filters", {}); if (qs.cat) qCat.value = qs.cat; if (qs.mode) qMode.value = qs.mode; if (qs.lvl) qLvl.value = qs.lvl;
+  var cur = null, revealed = false, recent = [];
+  function score(q) { // lower = show sooner
+    var s = P.quiz[q.id]; if (!s) return -1;
+    var wrongRate = (s.w || 0) / Math.max(1, (s.r || 0) + (s.w || 0));
+    var ageDays = (now() - (s.t || 0)) / 864e5;
+    return (s.lastRight ? 1 : 0) * 3 + (s.r || 0) - wrongRate * 4 - Math.min(ageDays, 14) / 7 + Math.random() * 0.8;
+  }
+  function pool() {
+    return Q.filter(function (q) { return (!qCat.value || q.cat === qCat.value) && (!qLvl.value || String(q.lvl) === qLvl.value); });
+  }
+  function pick() {
+    var p = pool(), m = qMode.value;
+    LS.set("q-filters", { cat: qCat.value, mode: m, lvl: qLvl.value });
+    if (m === "new") p = p.filter(function (q) { return !P.quiz[q.id]; });
+    if (m === "missed") p = p.filter(function (q) { var s = P.quiz[q.id]; return s && !s.lastRight; });
+    var fresh = p.filter(function (q) { return recent.indexOf(q.id) < 0; });
+    if (fresh.length) p = fresh;
+    document.getElementById("qCount").textContent = p.length + " question" + (p.length === 1 ? "" : "s") + " in this set";
+    if (!p.length) return null;
+    if (m === "shuffle") return p[Math.floor(Math.random() * p.length)];
+    p.sort(function (a, b) { return score(a) - score(b); });
+    return p[0];
+  }
+  function showCard(q) {
+    cur = q; revealed = false;
+    var fq = document.getElementById("fcQ"), fa = document.getElementById("fcA"), btns = document.getElementById("fcBtns");
+    document.getElementById("fcTry").value = "";
+    if (!q) {
+      fq.textContent = qMode.value === "missed" ? "Nothing missed in this set. Nice work." : qMode.value === "new" ? "You've seen every question in this set." : "No questions match.";
+      document.getElementById("fcCat").textContent = ""; document.getElementById("fcLvl").textContent = ""; document.getElementById("fcHist").textContent = "";
+      fa.hidden = true; btns.innerHTML = ""; return;
+    }
+    recent.push(q.id); if (recent.length > 6) recent.shift();
+    document.getElementById("fcCat").textContent = CATS[q.cat];
+    document.getElementById("fcLvl").textContent = ["", "Basic", "Intermediate", "Advanced"][q.lvl];
+    var s = P.quiz[q.id];
+    document.getElementById("fcHist").textContent = s ? "Got it " + (s.r || 0) + " · missed " + (s.w || 0) : "New";
+    fq.textContent = q.q; fa.textContent = q.a; fa.hidden = true;
+    btns.innerHTML = '<button class="btn primary" data-q="reveal" type="button">Reveal answer</button><button class="btn" data-q="skip" type="button">Skip</button>';
+  }
+  document.getElementById("fcBtns").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-q]"); if (!b || !cur) return;
+    var a = b.getAttribute("data-q");
+    if (a === "reveal") {
+      document.getElementById("fcA").hidden = false; revealed = true;
+      this.innerHTML = '<button class="btn good" data-q="right" type="button">Got it</button><button class="btn bad" data-q="wrong" type="button">Missed it</button>';
+      return;
+    }
+    if (a === "right" || a === "wrong") {
+      var s = Object.assign({ r: 0, w: 0 }, P.quiz[cur.id]);
+      if (a === "right") s.r++; else s.w++;
+      s.lastRight = a === "right";
+      save("quiz", cur.id, s); renderCatStats();
+    }
+    showCard(pick());
+  });
+  document.addEventListener("keydown", function (e) {
+    if (document.getElementById("tab-tech").hidden || !cur || e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+    var btns = document.getElementById("fcBtns");
+    if (e.key === " " && !revealed) { e.preventDefault(); btns.querySelector('[data-q="reveal"]').click(); }
+    else if (revealed && (e.key === "1" || e.key === "ArrowRight")) btns.querySelector('[data-q="right"]').click();
+    else if (revealed && (e.key === "2" || e.key === "ArrowLeft")) btns.querySelector('[data-q="wrong"]').click();
+  });
+  function renderCatStats() {
+    document.getElementById("catStats").innerHTML = Object.keys(CATS).map(function (k) {
+      var qsIn = Q.filter(function (q) { return q.cat === k; });
+      var right = 0, wrong = 0, seen = 0;
+      qsIn.forEach(function (q) { var s = P.quiz[q.id]; if (s) { seen++; if (s.lastRight) right++; else wrong++; } });
+      var pr = qsIn.length ? right / qsIn.length * 100 : 0, pw = qsIn.length ? wrong / qsIn.length * 100 : 0;
+      return '<div class="cat"><b>' + esc(CATS[k]) + '</b><div class="hint">' + right + ' solid · ' + wrong + ' to review · ' + (qsIn.length - seen) + ' new</div>' +
+        '<div class="bar"><i class="g" style="width:' + pr + '%"></i><i class="r" style="width:' + pw + '%"></i></div></div>';
+    }).join("");
+  }
+  function renderTech() { renderCatStats(); if (!cur || !revealed) showCard(pick()); }
+  [qCat, qMode, qLvl].forEach(function (s) { s.onchange = function () { recent = []; showCard(pick()); }; });
+
+  /* ================================================================ EXCEL */
+  var xSet = document.getElementById("xSet"), xCur = null, xAnswered = false;
+  function xList() { return xSet.value === "f" ? window.EXCEL_FUNCTIONS : window.EXCEL_SHORTCUTS; }
+  function xNext() {
+    var list = xList().slice().sort(function (a, b) {
+      var sa = P.xq[a.id], sb = P.xq[b.id];
+      var ka = sa ? (sa.lastRight ? 2 : 0) + Math.random() : 1 + Math.random() * 0.5;
+      var kb = sb ? (sb.lastRight ? 2 : 0) + Math.random() : 1 + Math.random() * 0.5;
+      return ka - kb;
+    });
+    xCur = list[0] === xCur && list[1] ? list[1] : list[0]; xAnswered = false;
+    document.getElementById("xQ").textContent = xCur.q;
+    var opts = xCur.o.slice().sort(function () { return Math.random() - 0.5; });
+    document.getElementById("xOpts").innerHTML = opts.map(function (o) { return '<button class="opt kbd" type="button">' + esc(o) + '</button>'; }).join("");
+    xScore();
+  }
+  function xScore() {
+    var l = xList(), r = l.filter(function (q) { return P.xq[q.id] && P.xq[q.id].lastRight; }).length;
+    document.getElementById("xScore").textContent = r + " / " + l.length + " known";
+  }
+  document.getElementById("xOpts").addEventListener("click", function (e) {
+    var b = e.target.closest(".opt"); if (!b || xAnswered) return;
+    xAnswered = true;
+    var right = b.textContent === xCur.a;
+    Array.prototype.forEach.call(this.children, function (c) { if (c.textContent === xCur.a) c.classList.add("right"); });
+    if (!right) b.classList.add("wrong");
+    var s = Object.assign({ r: 0, w: 0 }, P.xq[xCur.id]); if (right) s.r++; else s.w++; s.lastRight = right;
+    save("xq", xCur.id, s); xScore();
+  });
+  document.getElementById("xNext").onclick = xNext;
+  xSet.onchange = xNext;
+  document.getElementById("caseTitle").textContent = window.EXCEL_CASE.title;
+  document.getElementById("caseInputs").innerHTML = window.EXCEL_CASE.inputs.map(function (r) {
+    return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(typeof r[1] === "number" ? r[1].toLocaleString() : r[1]) + '</td></tr>'; }).join("");
+  function fmt(n) { return Number(n).toLocaleString(undefined, { maximumFractionDigits: 4 }); }
+  function renderDrills() {
+    document.getElementById("drills").innerHTML = window.EXCEL_DRILLS.map(function (d, i) {
+      var s = P.drills[d.id] && !P.drills[d.id].deleted ? P.drills[d.id] : null;
+      var res = "";
+      if (s && s.val !== "" && s.val != null) res = s.ok ? '<span class="ok">Correct.</span>' :
+        '<span class="err">Not quite.</span> <span class="hint">Hint: ' + esc(d.hint) + (s.tries >= 2 ? " · Answer: " + fmt(d.ans) + (d.unit ? " " + esc(d.unit) : "") : "") + '</span>';
+      return '<div class="drill" data-id="' + d.id + '"><div><b>' + (i + 1) + '.</b> ' + esc(d.q) + (d.unit ? ' <span class="hint">(' + esc(d.unit) + ')</span>' : "") + '</div>' +
+        '<input type="number" step="any" value="' + esc(s ? s.val : "") + '" placeholder="Your answer">' +
+        '<button class="btn" type="button">Check</button><div class="res">' + res + '</div></div>';
+    }).join("");
+  }
+  function checkDrill(row) {
+    var id = row.getAttribute("data-id"), d = window.EXCEL_DRILLS.filter(function (x) { return x.id === id; })[0];
+    var v = row.querySelector("input").value; if (v === "") return;
+    var num = parseFloat(v), ok = Math.abs(num - d.ans) <= d.tol;
+    var prev = P.drills[id] && !P.drills[id].deleted ? P.drills[id] : { tries: 0 };
+    save("drills", id, { val: v, ok: ok, tries: ok ? prev.tries : (prev.tries || 0) + 1 });
+    renderDrills();
+  }
+  document.getElementById("drills").addEventListener("click", function (e) { if (e.target.tagName === "BUTTON") checkDrill(e.target.closest(".drill")); });
+  document.getElementById("drills").addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target.tagName === "INPUT") checkDrill(e.target.closest(".drill")); });
+  document.getElementById("dReset").onclick = function () {
+    if (!confirm("Clear all your drill answers?")) return;
+    window.EXCEL_DRILLS.forEach(function (d) { if (P.drills[d.id]) save("drills", d.id, { deleted: true }); });
+    renderDrills();
+  };
+
+  /* ================================================================ SYNC UI */
+  document.getElementById("signIn").onclick = function () {
+    var t = document.getElementById("tokenIn").value; if (!t.trim()) return;
+    this.disabled = true; var btn = this;
+    Sync.signIn(t).then(function () { toast("Signed in. Progress will sync."); document.getElementById("tokenIn").value = ""; })
+      .catch(function () {}).then(function () { btn.disabled = false; });
+  };
+  document.getElementById("signOut").onclick = function () { Sync.signOut(); toast("Signed out on this computer"); };
+  document.getElementById("syncNow").onclick = function () { Sync.run(); };
+  document.getElementById("exportBtn").onclick = function () {
+    var blob = new Blob([JSON.stringify(P, null, 1)], { type: "application/json" });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "recruiting-hub-backup-" + today() + ".json"; a.click();
+  };
+  document.getElementById("importIn").onchange = function () {
+    var f = this.files[0]; if (!f) return;
+    f.text().then(function (t) { P = merge(P, JSON.parse(t)); LS.set("hub-progress", P); Sync.schedule(); App.refresh(); toast("Backup restored"); })
+      .catch(function () { toast("That file isn't a hub backup"); });
+  };
+
+  var App = window.HubApp = {
+    refresh: function () { renderJobs(); renderStats(); renderDrills(); xScore();
+      if (!document.getElementById("tab-tracker").hidden) renderTracker();
+      if (!document.getElementById("tab-tech").hidden) renderCatStats(); }
+  };
+
+  /* ================================================================ boot */
+  renderDrills(); xNext(); Sync.renderAuth();
+  showTab(LS.get("tab", "jobs"));
   fetch("jobs.json", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
     DATA = d;
-    document.getElementById("updated").textContent = "Updated " + d.generated_at + " · eligibility for " + (d.grad || "May 2028") + " grads";
+    document.getElementById("updated").textContent = "Jobs updated " + d.generated_at + " · eligibility for " + (d.grad || "May 2028") + " grads";
     document.getElementById("demo").hidden = !d.demo;
     var uniq = function (k) { return Array.from(new Set(d.jobs.map(function (j) { return j[k]; }).filter(Boolean))).sort(); };
     fillSelect(el.fTrack, uniq("track")); fillSelect(el.fCity, uniq("city"));
-    stats(); sources(); render();
+    renderStats(); renderSources(); renderJobs();
   }).catch(function () {
-    document.getElementById("updated").textContent = "No data yet. Run the workflow once.";
+    document.getElementById("updated").textContent = "No job data yet.";
     document.getElementById("list").innerHTML = '<div class="empty">No results yet. Run the "Daily internship scan" workflow in GitHub Actions.</div>';
   });
+  Sync.run();
 })();
 </script>
 </body>
