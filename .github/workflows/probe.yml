@@ -1,0 +1,25 @@
+name: Probe new job boards
+
+# Manual. Tests new kinds of career sites and prints what works.
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Space-separated subset (phenom radancy jibe oracle goldman workday). Blank = all."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m finder.probe ${{ github.event.inputs.only }}

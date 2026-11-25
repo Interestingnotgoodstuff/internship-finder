@@ -10,6 +10,7 @@ import argparse
 import json
 import re
 import sys
+import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -54,7 +55,71 @@ def load_state() -> dict:
     return {"jobs": {}}
 
 
-def run(demo: bool = False) -> dict:
+RAW_DIR = ROOT / "data" / "raw"
+
+
+def ordered_for_fetch(companies: list[dict]) -> list[dict]:
+    """Spread Workday boards out between the others to avoid rate limits."""
+    wd = [c for c in companies if c.get("ats") == "workday"]
+    other = [c for c in companies if c.get("ats") != "workday"]
+    out = []
+    while wd or other:
+        if wd:
+            out.append(wd.pop(0))
+        if other:
+            out.append(other.pop(0))
+    return out
+
+
+def shard_of(companies: list[dict], k: int, n: int) -> list[dict]:
+    """Round-robin by board type so each shard gets an even share of Workday boards."""
+    wd = [c for c in companies if c.get("ats") == "workday"]
+    other = [c for c in companies if c.get("ats") != "workday"]
+    return [c for i, c in enumerate(wd) if i % n == k] + [c for i, c in enumerate(other) if i % n == k]
+
+
+def fetch_results(companies: list[dict], state: dict, retry_wait: int = 90) -> list:
+    """Fetch every board; boards that were rate-limited get one more try after a pause."""
+    cache = state.get("jobs", {})
+    results = list(S.iter_safe(ordered_for_fetch(companies), title_prefilter=wants_title, cache=cache))
+    limited = [c for c, _, err in results if err and ("429" in err or "503" in err or "Timeout" in err)]
+    if limited:
+        print(f"Rate-limited on {len(limited)} boards; retrying after {retry_wait}s", flush=True)
+        time.sleep(retry_wait)
+        again = {c["name"]: (c, j, e) for c, j, e in S.iter_safe(limited, title_prefilter=wants_title, cache=cache)}
+        results = [again.get(c["name"], (c, j, e)) if e else (c, j, e) for c, j, e in results]
+    return results
+
+
+def fetch_shard(k: int, n: int) -> None:
+    cfg = load_config()
+    part = shard_of(cfg.get("companies") or [], k, n)
+    print(f"Shard {k + 1}/{n}: {len(part)} boards", flush=True)
+    results = fetch_results(part, load_state())
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+    out = [{"company": c["name"], "jobs": jobs, "error": err} for c, jobs, err in results]
+    (RAW_DIR / f"shard_{k}.json").write_text(json.dumps(out))
+    bad = sum(1 for r in out if r["error"])
+    print(f"Shard {k + 1}/{n} done: {len(out) - bad} ok, {bad} errors", flush=True)
+
+
+def load_raw(companies: list[dict]) -> list:
+    by_name = {c["name"]: c for c in companies}
+    got = {}
+    for f in sorted(RAW_DIR.glob("shard_*.json")):
+        for r in json.loads(f.read_text()):
+            got[r["company"]] = r
+    out = []
+    for name, c in by_name.items():
+        r = got.get(name)
+        if r is None:
+            out.append((c, [], "Not fetched (scan job failed)"))
+        else:
+            out.append((c, r["jobs"], r["error"]))
+    return out
+
+
+def run(demo: bool = False, from_raw: bool = False) -> dict:
     cfg = load_config()
     companies = cfg.get("companies") or []
     state = load_state()
@@ -65,17 +130,10 @@ def run(demo: bool = False) -> dict:
     if demo:
         from .demo import demo_results
         results = demo_results(companies)
+    elif from_raw:
+        results = load_raw(companies)
     else:
-        # Spread Workday boards out between the others to avoid rate limits.
-        wd = [c for c in companies if c.get("ats") == "workday"]
-        other = [c for c in companies if c.get("ats") != "workday"]
-        ordered = []
-        while wd or other:
-            if wd:
-                ordered.append(wd.pop(0))
-            if other:
-                ordered.append(other.pop(0))
-        results = S.iter_safe(ordered, title_prefilter=wants_title, cache=state.get("jobs", {}))
+        results = fetch_results(companies, state)
 
     for c, jobs, err in results:
         kept = 0
@@ -145,8 +203,14 @@ def run(demo: bool = False) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--demo", action="store_true", help="use sample data instead of the internet")
+    ap.add_argument("--shard", type=int, help="fetch only shard K (0-based) and save raw results")
+    ap.add_argument("--shards", type=int, default=1, help="number of shards")
+    ap.add_argument("--merge", action="store_true", help="build outputs from saved shard results")
     args = ap.parse_args(argv)
-    run(demo=args.demo)
+    if args.shard is not None:
+        fetch_shard(args.shard, args.shards)
+        return 0
+    run(demo=args.demo, from_raw=args.merge)
     return 0
 
 

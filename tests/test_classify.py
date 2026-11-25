@@ -73,3 +73,14 @@ def test_graduation_by_summer_2028_is_eligible():
 def test_trading_technology_is_not_finance_seat():
     assert track_of("2027 Summer Internship Program – Equities Trading Technology", "") == "Non-finance"
     assert track_of("2027 Summer Analyst - Technology Investment Banking", "") == "Investment Banking"
+
+
+def test_associate_phd_offcycle_and_past_year_are_not_eligible():
+    from finder.classify import eligibility
+    for t in ["2027 Blackstone Infrastructure, Investment Summer Senior Associate",
+              "Current PhD, Applied Research Internship Program - Summer 2027",
+              "Public and Private Credit Intern – 9-month placement",
+              "2026 Summer Analyst, Product Management",
+              "Strategic Partners Off Cycle Intern (London)"]:
+        assert eligibility(t, "")[0] == "Not eligible", t
+    assert eligibility("2027 Summer Analyst - Corporate Banking", "")[0] != "Not eligible"

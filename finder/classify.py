@@ -170,8 +170,14 @@ def eligibility(title: str, text: str) -> tuple[str, str]:
     both = f"{t}\n{body}"
 
     # Hard exclusions from the title.
-    if re.search(r"summer associate|\bmba\b", t):
-        return "Not eligible", "MBA / summer associate role"
+    if re.search(r"(summer|senior) associate|\bmba\b", t):
+        return "Not eligible", "MBA / associate-level role"
+    if re.search(r"\bph\.?d\b|master'?s|graduate student|\bjd\b|law student", t):
+        return "Not eligible", "For PhD / master's / law students"
+    if re.search(r"off[- ]cycle|\b(6|9|six|nine)[- ]month|co-?op\b|placement year|industrial placement", t):
+        return "Not eligible", "Off-cycle / co-op placement, not a summer internship"
+    if re.search(rf"\b{SUMMER_YEAR - 1}\b", t) and not re.search(rf"\b{SUMMER_YEAR}\b", t):
+        return "Not eligible", f"{SUMMER_YEAR - 1} program (already past)"
     if re.search(rf"class of {GRAD_YEAR}\b", both):
         return "Eligible", f"Says class of {GRAD_YEAR}"
     if re.search(rf"\b{SUMMER_YEAR + 1}\b", t) and re.search(r"summer|intern", t):

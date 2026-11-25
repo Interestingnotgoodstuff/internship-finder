@@ -51,3 +51,10 @@ def test_workday_payload_shapes():
     assert S.parse_workday_list(listing)[0]["externalPath"].startswith("/job/")
     assert S.parse_workday_detail(detail)["jobReqId"] == "R1"
     assert S.workday_base("bmo", "wd3", "Campus") == "https://bmo.wd3.myworkdayjobs.com/wday/cxs/bmo/Campus"
+
+
+def test_shards_cover_every_board_once():
+    from finder.main import load_config, shard_of
+    cos = load_config()["companies"]
+    names = [c["name"] for k in range(4) for c in shard_of(cos, k, 4)]
+    assert sorted(names) == sorted(c["name"] for c in cos)
