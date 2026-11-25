@@ -4,6 +4,10 @@ name: Probe new job boards
 on:
   workflow_dispatch:
     inputs:
+      script:
+        description: "probe or probe2"
+        required: false
+        default: "probe"
       only:
         description: "Space-separated subset (phenom radancy jibe oracle goldman workday). Blank = all."
         required: false
@@ -22,4 +26,4 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - run: python -m finder.probe ${{ github.event.inputs.only }}
+      - run: python -m finder.${{ github.event.inputs.script || 'probe' }} ${{ github.event.inputs.only }}
