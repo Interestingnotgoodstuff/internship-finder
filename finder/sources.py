@@ -101,8 +101,16 @@ def fetch_workday(c: dict, title_prefilter=None, cache=None, **_) -> list[dict]:
     for term in WORKDAY_SEARCH_TERMS:
         offset = 0
         while offset < WORKDAY_MAX_PER_TERM:
-            data = _post(f"{base}/jobs", {"appliedFacets": {}, "limit": WORKDAY_PAGE,
-                                          "offset": offset, "searchText": term})
+            try:
+                data = _post(f"{base}/jobs", {"appliedFacets": {}, "limit": WORKDAY_PAGE,
+                                              "offset": offset, "searchText": term})
+            except requests.HTTPError as e:
+                # Some boards reject keyword search (HTTP 422); list everything instead.
+                if e.response is None or e.response.status_code != 422 or term == "":
+                    raise
+                term = ""
+                data = _post(f"{base}/jobs", {"appliedFacets": {}, "limit": WORKDAY_PAGE,
+                                              "offset": offset, "searchText": ""})
             posts = parse_workday_list(data)
             for p in posts:
                 path = p.get("externalPath")
@@ -222,11 +230,213 @@ def fetch_ashby(c: dict, **_) -> list[dict]:
     return parse_ashby(c, _get(f"https://api.ashbyhq.com/posting-api/job-board/{c['org']}"))
 
 
+# -------------------------------------------------------------- Phenom
+# Career sites at careers.<bank>.com/us/en (Truist, Frost, Regions, US Bank).
+# Their keyword search is unreliable, so page through every listing and
+# filter titles locally; only matching postings get a detail request.
+def _phenom_page(host: str, frm: int, size: int = 100) -> dict:
+    body = {"lang": "en_us", "deviceType": "desktop", "country": "us", "pageName": "search-results",
+            "ddoKey": "refineSearch", "sortBy": "", "subsearch": "", "from": frm, "jobs": True,
+            "counts": False, "all_fields": [], "size": size, "clearAll": False, "jdsource": "facets",
+            "isSliderEnable": False, "pageId": "page20", "siteType": "external", "keywords": "",
+            "global": True, "selected_fields": {}, "locationData": {}}
+    return _request("POST", f"https://{host}/widgets", json=body,
+                    headers={"Content-Type": "application/json", "Origin": f"https://{host}",
+                             "Referer": f"https://{host}/us/en/search-results"}).get("refineSearch") or {}
+
+
+_JSON_DESC = re.compile(r'"description"\s*:\s*"((?:[^"\\]|\\.)*)"')
+
+
+def _phenom_description(host: str, job_id: str) -> str:
+    try:
+        _throttle()
+        r = SESSION.get(f"https://{host}/us/en/job/{job_id}", timeout=TIMEOUT)
+        m = _JSON_DESC.search(r.text)
+        if not m:
+            return ""
+        import json as _json
+        return html_to_text(_json.loads('"' + m.group(1) + '"'))
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def fetch_phenom(c: dict, title_prefilter=None, cache=None, **_) -> list[dict]:
+    cache = cache or {}
+    host, size, frm, total, posts = c["host"], 100, 0, None, []
+    while total is None or frm < min(total, 3000):
+        rs = _phenom_page(host, frm, size)
+        jobs = (rs.get("data") or {}).get("jobs") or []
+        total = rs.get("totalHits") or 0
+        posts.extend(jobs)
+        if not jobs:
+            break
+        frm += size
+    out = []
+    for j in posts:
+        title = j.get("title", "")
+        if title_prefilter and not title_prefilter(title):
+            continue
+        jid = f"phenom:{host}:{j.get('jobId') or j.get('reqId')}"
+        old = cache.get(jid)
+        desc = old["description"] if old and old.get("description") else _phenom_description(host, j.get("jobId"))
+        out.append({
+            "id": jid, "company": c["name"], "category": c.get("category", ""),
+            "title": title, "location": j.get("cityStateCountry") or j.get("location", ""),
+            "url": f"https://{host}/us/en/job/{j.get('jobId')}",
+            "posted": (j.get("postedDate") or j.get("dateCreated") or "")[:10],
+            "description": desc or html_to_text(j.get("descriptionTeaser")), "source": "Phenom",
+        })
+    return out
+
+
+# ------------------------------------------------------ Radancy (Citi)
+_RADANCY_ITEM = re.compile(
+    r'<a[^>]+href="(/job/[^"]+)"[^>]*>\s*(.*?)\s*</a>.*?(?:sr-job-location|job-location)[^>]*>(.*?)<', re.S)
+
+
+def fetch_radancy(c: dict, title_prefilter=None, cache=None, **_) -> list[dict]:
+    cache = cache or {}
+    host, seen = c["host"], {}
+    for kw in c.get("keywords", ["2027", "intern"]):
+        for page in range(1, 11):
+            url = (f"https://{host}/search-jobs/results?ActiveFacetID=0&CurrentPage={page}&RecordsPerPage=100"
+                   f"&Distance=50&RadiusUnitType=0&Keywords={requests.utils.quote(kw)}&Location=&ShowRadius=False"
+                   f"&IsPagination=True&FacetType=0&SearchResultsModuleName=Search+Results"
+                   f"&SearchFiltersModuleName=Search+Filters&SortCriteria=0&SortDirection=0&SearchType=5&ResultsType=0")
+            d = _request("GET", url, headers={"X-Requested-With": "XMLHttpRequest", "Accept": "application/json"})
+            items = _RADANCY_ITEM.findall(d.get("results", ""))
+            for link, title, loc in items:
+                seen.setdefault(link, (html.unescape(re.sub(r"<[^>]+>", "", title)).strip(), html.unescape(loc).strip()))
+            if len(items) < 100:
+                break
+    out = []
+    for link, (title, loc) in seen.items():
+        if title_prefilter and not title_prefilter(title):
+            continue
+        jid = f"radancy:{host}:{link.rsplit('/', 1)[-1]}"
+        old = cache.get(jid)
+        desc, posted = (old.get("description"), old.get("posted", "")) if old and old.get("description") else ("", "")
+        if not desc:
+            try:
+                _throttle()
+                page = SESSION.get(f"https://{host}{link}", timeout=TIMEOUT).text
+                m = re.search(r'<script type="application/ld\+json">(.*?)</script>', page, re.S)
+                if m:
+                    import json as _json
+                    ld = _json.loads(m.group(1))
+                    desc, posted = html_to_text(ld.get("description")), ld.get("datePosted", "")
+            except Exception:  # noqa: BLE001
+                pass
+        out.append({"id": jid, "company": c["name"], "category": c.get("category", ""), "title": title,
+                    "location": loc, "url": f"https://{host}{link}", "posted": posted,
+                    "description": desc, "source": "Radancy"})
+    return out
+
+
+# ------------------------------------------------- Oracle HCM (J.P. Morgan)
+def fetch_oracle(c: dict, title_prefilter=None, cache=None, **_) -> list[dict]:
+    cache = cache or {}
+    host, site, seen = c["host"], c["site"], {}
+    api = f"https://{host}/hcmRestApi/resources/latest"
+    for kw in c.get("keywords", ["2027", "intern", "summer"]):
+        offset = 0
+        while offset < 1000:
+            url = (f"{api}/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations"
+                   f"&finder=findReqs;siteNumber={site},keyword=%22{requests.utils.quote(kw)}%22,"
+                   f"limit=100,offset={offset},sortBy=POSTING_DATES_DESC")
+            items = (_request("GET", url).get("items") or [{}])
+            reqs = items[0].get("requisitionList") or []
+            for r in reqs:
+                seen.setdefault(str(r.get("Id")), r)
+            total = items[0].get("TotalJobsCount") or 0
+            offset += 100
+            if not reqs or offset >= total:
+                break
+    out = []
+    for rid, r in seen.items():
+        title = r.get("Title", "")
+        if title_prefilter and not title_prefilter(title):
+            continue
+        jid = f"oracle:{host}:{rid}"
+        old = cache.get(jid)
+        desc = old.get("description") if old else ""
+        if not desc:
+            try:
+                d = _request("GET", f'{api}/recruitingCEJobRequisitionDetails?expand=all&onlyData=true'
+                                    f'&finder=ById;Id=%22{rid}%22,siteNumber={site}')
+                it = (d.get("items") or [{}])[0]
+                desc = html_to_text(" ".join(str(it.get(k) or "") for k in
+                                             ("ExternalDescriptionStr", "ExternalQualificationsStr",
+                                              "ExternalResponsibilitiesStr", "ShortDescriptionStr")))
+            except Exception:  # noqa: BLE001
+                desc = html_to_text(r.get("ShortDescriptionStr"))
+        locs = [r.get("PrimaryLocation", "")] + [x.get("Name", "") for x in (r.get("secondaryLocations") or [])]
+        out.append({"id": jid, "company": c["name"], "category": c.get("category", ""), "title": title,
+                    "location": "; ".join(l for l in locs if l),
+                    "url": f"https://{host}/hcmUI/CandidateExperience/en/sites/{site}/job/{rid}",
+                    "posted": (r.get("PostedDate") or "")[:10], "description": desc, "source": "Oracle"})
+    return out
+
+
+# ----------------------------------------------------------- Goldman Sachs
+GS_QUERY = """query GetCampusRoles($searchQueryInput: RoleSearchQueryInput!) {
+  roleSearch(searchQueryInput: $searchQueryInput) { totalCount items {
+    roleId corporateTitle jobTitle jobFunction locations { primary state country city }
+    status division educationLevel startDate gradDegreeStartDate gradDegreeEndDate
+    externalSource { sourceId } } } }"""
+
+
+def fetch_goldman(c: dict, title_prefilter=None, **_) -> list[dict]:
+    out, page, size = [], 0, 100
+    while True:
+        payload = {"operationName": "GetCampusRoles", "query": GS_QUERY, "variables": {"searchQueryInput": {
+            "page": {"pageSize": size, "pageNumber": page},
+            "sort": {"sortStrategy": "POSTED_DATE", "sortOrder": "DESC"},
+            "filters": [], "experiences": ["CAMPUS"], "searchTerm": ""}}}
+        d = _request("POST", "https://api-higher.gs.com/gateway/api/v1/graphql", json=payload,
+                     headers={"Content-Type": "application/json", "Origin": "https://higher.gs.com",
+                              "Referer": "https://higher.gs.com/"})
+        if d.get("errors"):
+            raise RuntimeError(str(d["errors"])[:200])
+        rs = (d.get("data") or {}).get("roleSearch") or {}
+        items = rs.get("items") or []
+        for r in items:
+            title = r.get("jobTitle") or ""
+            if title_prefilter and not title_prefilter(title):
+                continue
+            locs = r.get("locations") or []
+            loc = "; ".join(", ".join(x for x in (l.get("city"), l.get("state"), l.get("country")) if x) for l in locs)
+            g1, g2 = (r.get("gradDegreeStartDate") or "")[:7], (r.get("gradDegreeEndDate") or "")[:7]
+            desc = (f"Division: {r.get('division') or ''}. Function: {r.get('jobFunction') or ''}. "
+                    + (f"Candidates graduating between {_ym(g1)} and {_ym(g2)}. " if g1 and g2 else ""))
+            out.append({"id": f"goldman:{r.get('roleId')}", "company": c["name"], "category": c.get("category", ""),
+                        "title": title, "location": loc, "url": f"https://higher.gs.com/roles/{r.get('roleId')}",
+                        "posted": (r.get("startDate") or "")[:10], "description": desc, "source": "Goldman"})
+        if not items or (page + 1) * size >= (rs.get("totalCount") or 0):
+            break
+        page += 1
+    return out
+
+
+def _ym(s: str) -> str:
+    try:
+        y, m = s.split("-")[:2]
+        return ["January", "February", "March", "April", "May", "June", "July", "August", "September",
+                "October", "November", "December"][int(m) - 1] + " " + y
+    except Exception:  # noqa: BLE001
+        return s
+
+
 FETCHERS = {
     "workday": fetch_workday,
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
     "ashby": fetch_ashby,
+    "phenom": fetch_phenom,
+    "radancy": fetch_radancy,
+    "oracle": fetch_oracle,
+    "goldman": fetch_goldman,
 }
 
 

@@ -12,6 +12,10 @@
 #               -> {name, ats: lever, slug}
 #   Ashby:      https://jobs.ashbyhq.com/<org>/...
 #               -> {name, ats: ashby, org}
+#   Phenom:     https://careers.<bank>.com/us/en/job/...   -> {name, ats: phenom, host}
+#   Radancy:    https://jobs.<bank>.com/job/<city>/<slug>/<org>/<id>  -> {name, ats: radancy, host}
+#   Oracle:     https://<x>.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/<site>/job/<id>
+#               -> {name, ats: oracle, host, site}
 #
 # "category" is only a label used for grouping on the dashboard.
 # Not sure of the details? Put the firm under "candidates" at the bottom
@@ -53,8 +57,20 @@ companies:
   - {name: "FNB Corp", category: "Commercial / Corporate Banking", ats: workday, tenant: fnbcorp, wd: wd501, site: FNBCORP}
   - {name: "Western Alliance", category: "Commercial / Corporate Banking", ats: workday, tenant: westernalliancebank, wd: wd5, site: WAB}
 
+  # ---------- Big banks with their own career sites ----------
+  - {name: "J.P. Morgan", category: "Commercial / Corporate Banking", ats: oracle, host: jpmc.fa.oraclecloud.com, site: CX_1001}
+  - {name: "Citi", category: "Commercial / Corporate Banking", ats: radancy, host: jobs.citi.com}
+  - {name: "Goldman Sachs", category: Banking, ats: goldman}
+  - {name: "Citizens", category: "Commercial / Corporate Banking", ats: radancy, host: jobs.citizensbank.com, keywords: ["intern", "summer"]}
+
+  # ---------- Regional banks (Phenom career sites) ----------
+  - {name: "Truist", category: "Commercial / Corporate Banking", ats: phenom, host: careers.truist.com}
+  - {name: "Frost Bank", category: "Commercial / Corporate Banking", ats: phenom, host: careers.frostbank.com}
+  - {name: "Regions", category: "Commercial / Corporate Banking", ats: phenom, host: careers.regions.com}
+  - {name: "U.S. Bank", category: "Commercial / Corporate Banking", ats: phenom, host: careers.usbank.com}
+
   # ---------- Private credit / investing ----------
-  - {name: "PGIM", category: "Private Credit / Investing", ats: workday, tenant: pru, wd: wd5, site: Careers}
+  - {name: "PGIM", category: "Private Credit / Investing", ats: workday, tenant: pru, wd: wd5, site: PGIM_Careers}
   - {name: "Apollo", category: "Private Credit / Investing", ats: workday, tenant: athene, wd: wd5, site: nonpubapollocareersite}
   - {name: "Blackstone", category: "Private Credit / Investing", ats: workday, tenant: blackstone, wd: wd1, site: Blackstone_Campus_Careers}
   - {name: "General Atlantic", category: "Private Credit / Investing", ats: greenhouse, token: gacampus}
@@ -84,7 +100,6 @@ candidates:
   - {name: "Centerview", guesses: {greenhouse: [centerviewpartners, centerview]}}
   - {name: "Solomon Partners", guesses: {greenhouse: [solomonpartners, solomon], lever: [solomonpartners]}}
   - {name: "Stifel", guesses: {workday: [[stifel, wd1], [stifel, wd5]]}}
-  - {name: "Truist", guesses: {workday: [[truist, wd1], [truist, wd5]]}}
   - {name: "RBC", guesses: {workday: [[rbc, wd3], [rbc, wd1]]}}
   - {name: "Scotiabank", guesses: {workday: [[scotiabank, wd3], [scotiabank, wd1]]}}
   - {name: "Northern Trust", guesses: {workday: [[ntrs, wd1], [northerntrust, wd1], [ntrs, wd5]]}}

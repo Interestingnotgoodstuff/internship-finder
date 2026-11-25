@@ -58,3 +58,27 @@ def test_shards_cover_every_board_once():
     cos = load_config()["companies"]
     names = [c["name"] for k in range(4) for c in shard_of(cos, k, 4)]
     assert sorted(names) == sorted(c["name"] for c in cos)
+
+
+def test_radancy_item_regex():
+    from finder.sources import _RADANCY_ITEM
+    html = '''<h3 class="sr-job-item__title">
+      <a class="sr-job-item__link" href="/job/houston/banking-corporate-banking-summer-analyst-houston-us-2027/287/89623966960" data-job-id="1">
+          Banking - Corporate Banking Summer Analyst - Houston, US 2027
+      </a></h3>
+      <span class="sr-job-item__facet sr-job-item__facet-icon sr-job-location">Houston, Texas, United States</span></li>'''
+    (link, title, loc), = _RADANCY_ITEM.findall(html)
+    assert link.endswith("/89623966960") and title.startswith("Banking - Corporate") and loc.startswith("Houston")
+
+
+def test_goldman_parse(monkeypatch):
+    from finder import sources as S
+    fake = {"data": {"roleSearch": {"totalCount": 1, "items": [{
+        "roleId": "158147", "jobTitle": "2027 | Americas | Dallas | Transaction Banking (TxB), Coverage | Summer Analyst",
+        "locations": [{"city": "Dallas", "state": "Texas", "country": "United States"}], "division": "Banking",
+        "jobFunction": "Coverage", "gradDegreeStartDate": "2027-12-01", "gradDegreeEndDate": "2028-06-30"}]}}}
+    monkeypatch.setattr(S, "_request", lambda *a, **k: fake)
+    (j,) = S.fetch_goldman({"name": "Goldman Sachs"})
+    from finder.classify import classify
+    classify(j)
+    assert j["eligibility"] == "Eligible" and "Dallas" in j["location"]
