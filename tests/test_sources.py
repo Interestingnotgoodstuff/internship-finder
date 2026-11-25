@@ -82,3 +82,14 @@ def test_goldman_parse(monkeypatch):
     from finder.classify import classify
     classify(j)
     assert j["eligibility"] == "Eligible" and "Dallas" in j["location"]
+
+
+def test_is_us():
+    from finder.main import is_us
+    for loc in ["Dallas, TX", "Irving, Texas, United States", "New York, NY, United States", "DE, United States",
+                "Tempe, AZ, United States; Columbus, OH", "Atlanta, Georgia, USA", "", "Remote - US"]:
+        assert is_us(loc), loc
+    for loc in ["Shanghai, Shanghai Municipality, China", "Metro Manila, National Capital Region, P", "Indonesia",
+                "Warsaw, Mazovia, Poland", "Taipei, Taiwan, Taiwan", "Stockholm, Stockholm County, Sweden",
+                "London", ", Finland", "Virtual, BR", "Seoul The Executive Centre", "Copenhagen, Capital Region, Denmark"]:
+        assert not is_us(loc), loc

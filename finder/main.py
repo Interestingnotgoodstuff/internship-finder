@@ -26,15 +26,42 @@ OUT = ROOT / "docs" / "jobs.json"
 NEW_TODAY = ROOT / "data" / "new_today.json"
 KEEP_CLOSED_DAYS = 14
 
+US_STATES = ("Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|"
+             "Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|"
+             "Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|"
+             "New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|"
+             "South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|"
+             "Wisconsin|Wyoming|District of Columbia")
+US_ABBR = ("AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|"
+           "NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC")
+US_RE = re.compile(rf"united states|\busa?\b|\b({US_STATES})\b|(^|[,\s-])({US_ABBR})(\b|$)|"
+                   r"new york|nyc|chicago|dallas|houston|charlotte|atlanta|boston|san francisco|los angeles|"
+                   r"denver|miami|philadelphia|seattle|austin|san antonio|cleveland|minneapolis|"
+                   r"remote.{0,5}us|nationwide", re.I)
 NON_US = re.compile(
     r"london|toronto|montreal|calgary|vancouver|hong kong|singapore|tokyo|sydney|melbourne|"
-    r"paris|frankfurt|zurich|geneva|dublin|luxembourg|madrid|milan|amsterdam|mumbai|"
-    r"bangalore|bengaluru|dubai|sao paulo|mexico city|canada|united kingdom|\buk\b|india|"
-    r"germany|france|spain|switzerland|japan|australia|ireland|brazil|mexico|monterrey|guadalajara", re.I)
+    r"paris|frankfurt|zurich|geneva|dublin|luxembourg|madrid|milan|amsterdam|mumbai|warsaw|"
+    r"bangalore|bengaluru|dubai|sao paulo|mexico city|canada|united kingdom|\buk\b|england|india|"
+    r"germany|france|spain|switzerland|japan|australia|ireland|brazil|mexico|monterrey|guadalajara|"
+    r"china|shanghai|beijing|taiwan|taipei|korea|seoul|philippines|manila|indonesia|malaysia|thailand|"
+    r"vietnam|poland|sweden|stockholm|finland|helsinki|denmark|copenhagen|norway|oslo|netherlands|"
+    r"belgium|brussels|italy|austria|vienna|czech|prague|hungary|budapest|romania|greece|turkey|istanbul|"
+    r"israel|tel aviv|saudi|riyadh|qatar|doha|abu dhabi|uae|egypt|south africa|johannesburg|nigeria|"
+    r"kenya|argentina|buenos aires|chile|santiago|colombia|bogota|peru|lima|new zealand|auckland|"
+    r"pakistan|bangladesh|sri lanka|portugal|lisbon|scotland|edinburgh|glasgow|bahrain|kuwait|\bbr\b", re.I)
 
 
 def is_us(location: str) -> bool:
-    return not NON_US.search(location or "")
+    loc = location or ""
+    if not loc.strip():
+        return True
+    # Multi-location postings count as US if any location is in the US.
+    parts = re.split(r";|\|", loc)
+    if any(US_RE.search(p) and not NON_US.search(p) for p in parts):
+        return True
+    if NON_US.search(loc):
+        return False
+    return True
 
 
 def wants_title(title: str) -> bool:
@@ -78,14 +105,17 @@ def shard_of(companies: list[dict], k: int, n: int) -> list[dict]:
     return [c for i, c in enumerate(wd) if i % n == k] + [c for i, c in enumerate(other) if i % n == k]
 
 
-def fetch_results(companies: list[dict], state: dict, retry_wait: int = 90) -> list:
+def fetch_results(companies: list[dict], state: dict, retry_wait: int = 180, passes: int = 2) -> list:
     """Fetch every board; boards that were rate-limited get one more try after a pause."""
     cache = state.get("jobs", {})
     results = list(S.iter_safe(ordered_for_fetch(companies), title_prefilter=wants_title, cache=cache))
-    limited = [c for c, _, err in results if err and ("429" in err or "503" in err or "Timeout" in err)]
-    if limited:
-        print(f"Rate-limited on {len(limited)} boards; retrying after {retry_wait}s", flush=True)
-        time.sleep(retry_wait)
+    for n in range(passes):
+        limited = [c for c, _, err in results if err and ("429" in err or "503" in err or "Timeout" in err)]
+        if not limited:
+            break
+        wait = retry_wait * (n + 1)
+        print(f"Rate-limited on {len(limited)} boards; retry {n + 1} after {wait}s", flush=True)
+        time.sleep(wait)
         again = {c["name"]: (c, j, e) for c, j, e in S.iter_safe(limited, title_prefilter=wants_title, cache=cache)}
         results = [again.get(c["name"], (c, j, e)) if e else (c, j, e) for c, j, e in results]
     return results
